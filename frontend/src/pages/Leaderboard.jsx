@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { buildApiUrl } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { useExport } from "@/context/ExportContext";
 import PageLoading from "../components/PageLoading";
@@ -88,7 +89,7 @@ export default function Leaderboard() {
     const fetchLeaderboardData = async () => {
       try {
         const [response, users] = await Promise.all([
-          axios.get("http://localhost:3000/api/data/all"),
+          axios.get(buildApiUrl("/api/data/all")),
           fetchUsers(),
         ]);
 

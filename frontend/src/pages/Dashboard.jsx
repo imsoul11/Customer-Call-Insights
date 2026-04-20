@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { buildApiUrl } from "@/lib/api";
 import { useAuth } from "../context/AuthContext";
 import { useExport } from "../context/ExportContext";
 import PageLoading from "../components/PageLoading";
@@ -176,7 +177,7 @@ const Dashboard = () => {
     const fetchData = async () => {
       try {
         const [response, users] = await Promise.all([
-          fetch("http://localhost:3000/api/data/all"),
+          fetch(buildApiUrl("/api/data/all")),
           fetchUsers(),
         ]);
 

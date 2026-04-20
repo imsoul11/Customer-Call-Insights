@@ -1,6 +1,7 @@
 import { collection, getDocs, addDoc,doc,updateDoc,query,where ,getDoc,deleteDoc} from "firebase/firestore";
 import { db } from "./firebase"; // Import your Firebase config
 import axios from "axios";
+import { buildApiUrl } from "./lib/api";
 // Function to fetch call records from Firestore
 export async function fetchCallRecords() {
   const callRecords = [];
@@ -113,7 +114,7 @@ function generateUniqueEid() {
 //Mail template 
 async function sendWelcomeEmail({ email, eid, password }) {
   try {
-    const response = await axios.post('http://localhost:3000/send-welcome-email', {
+    const response = await axios.post(buildApiUrl("/send-welcome-email"), {
       email,
       eid,
       password

@@ -29,6 +29,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { buildApiUrl } from "@/lib/api";
 import { useExport } from "../context/ExportContext";
 import { useAuth } from "../context/AuthContext";
 import PageLoading from "../components/PageLoading";
@@ -126,7 +127,7 @@ export function CallAnalysis() {
     const fetchCallData = async () => {
       try {
         const [response, users] = await Promise.all([
-          axios.get("http://localhost:3000/api/data/all"),
+          axios.get(buildApiUrl("/api/data/all")),
           fetchUsers(),
         ]);
 
