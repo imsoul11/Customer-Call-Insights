@@ -179,7 +179,7 @@ const Login = () => {
                   </CardDescription>
                 </div>
                 <Badge variant="outline" className="border-slate-200 bg-white/80 text-slate-700 dark:border-slate-800 dark:bg-slate-900/80 dark:text-slate-200">
-                  Quick Access
+                  Access
                 </Badge>
               </div>
 
