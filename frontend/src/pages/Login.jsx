@@ -211,12 +211,6 @@ const Login = () => {
                             {account.name}
                           </div>
                         </div>
-                        <Badge
-                          variant="outline"
-                          className="shrink-0 border-slate-200 bg-white text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
-                        >
-                          {account.department}
-                        </Badge>
                       </div>
 
                       <div className="min-h-[82px] rounded-2xl border border-slate-200/70 bg-slate-50/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">

@@ -242,7 +242,6 @@ export function CallLogs() {
     selectedDate ? `Date: ${selectedDate}` : null,
     selectedRegion !== "All" ? `Region: ${selectedRegion}` : null,
     selectedStatus !== "All" ? `Status: ${selectedStatus}` : null,
-    !isEmployee && selectedDepartment !== "All" ? `Department: ${selectedDepartment}` : null,
   ].filter(Boolean);
 
   const totalPages = Math.max(1, Math.ceil(filteredLogs.length / ROWS_PER_PAGE));
@@ -304,7 +303,6 @@ export function CallLogs() {
         "Call ID",
         ...(!isEmployee ? ["Employee"] : []),
         "Customer Phone",
-        "Department",
         "Region",
         "Status",
         "Timestamp",
@@ -314,7 +312,6 @@ export function CallLogs() {
         log.cid,
         ...(!isEmployee ? [getEmployeeLabel(log.eid)] : []),
         log.customer_phone,
-        log.department,
         log.region,
         log.status,
         `${formatDisplayDate(log.timestamp)} ${formatDisplayTime(log.timestamp)}`,
@@ -458,21 +455,6 @@ export function CallLogs() {
                 </SelectContent>
               </Select>
 
-              {!isEmployee && (
-                <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
-                  <SelectTrigger className="h-11 border-slate-200 bg-white/90 shadow-sm shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-950/80 dark:shadow-none sm:col-span-2">
-                    <SelectValue placeholder="Select Department" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="All">All Departments</SelectItem>
-                    {uniqueDepartments.map((department) => (
-                      <SelectItem key={department} value={department}>
-                        {department}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
             </div>
 
             <div className="flex flex-wrap gap-2">
@@ -572,7 +554,6 @@ export function CallLogs() {
                       <TableHead className="w-[110px] text-left text-xs uppercase tracking-[0.14em] text-slate-500">Employee</TableHead>
                     )}
                     <TableHead className="w-[110px] text-left text-xs uppercase tracking-[0.14em] text-slate-500">Customer Phone</TableHead>
-                    <TableHead className="w-[110px] text-left text-xs uppercase tracking-[0.14em] text-slate-500">Department</TableHead>
                     <TableHead className="w-[110px] text-left text-xs uppercase tracking-[0.14em] text-slate-500">Region</TableHead>
                     <TableHead className="w-[110px] text-left text-xs uppercase tracking-[0.14em] text-slate-500">Status</TableHead>
                     <TableHead className="w-[110px] text-left text-xs uppercase tracking-[0.14em] text-slate-500">Timestamp</TableHead>
@@ -603,18 +584,6 @@ export function CallLogs() {
 
                       <TableCell className="text-left">
                         <span className="font-mono text-sm text-slate-700 dark:text-slate-200">{log.customer_phone}</span>
-                      </TableCell>
-
-                      <TableCell className="text-left">
-                        <Badge
-                          variant="outline"
-                          className={cn(
-                            "w-[86px] justify-center overflow-hidden text-ellipsis font-medium",
-                            getTokenTone(log.department || "")
-                          )}
-                        >
-                          {log.department || "Unknown"}
-                        </Badge>
                       </TableCell>
 
                       <TableCell className="text-left">

@@ -20,13 +20,13 @@ const items = [
     role: "manager | employee",
   },
   {
-    title: "Calllogs",
+    title: "Call Logs",
     url: "/dashboard/calllogs",
     icon: PhoneCall,
     role: "manager | employee",
   },
   {
-    title: "CallAnalysis",
+    title: "Ai Analysis",
     url: "/dashboard/callanalysis",
     icon: ListFilter,
     role: "manager | employee",

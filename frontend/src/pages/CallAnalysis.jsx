@@ -165,7 +165,6 @@ export function CallAnalysis() {
   }, []);
 
   const isEmployee = user?.role === "employee";
-  const tableColumnWidth = isEmployee ? "w-1/4" : "w-1/5";
 
   const filteredLogs = callAnalysis.filter((log) => {
     const matchesEid = isEmployee
@@ -416,7 +415,7 @@ export function CallAnalysis() {
             </div>
 
             <div className="mt-auto overflow-hidden rounded-3xl border border-cyan-200/70 bg-[radial-gradient(circle_at_top_right,_rgba(6,182,212,0.2),_transparent_42%),linear-gradient(135deg,_rgba(240,249,255,0.96),_rgba(236,253,245,0.96))] p-4 dark:border-cyan-900/40 dark:bg-[radial-gradient(circle_at_top_right,_rgba(6,182,212,0.18),_transparent_42%),linear-gradient(135deg,_rgba(15,23,42,0.95),_rgba(8,47,73,0.92))]">
-              <div className="flex items-start justify-between gap-4">
+              <div className="flex mt-3 items-start justify-between gap-4">
                 <div className="space-y-2">
                   <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-700/80 dark:text-cyan-300/80">
                     Quick Focus
@@ -440,32 +439,7 @@ export function CallAnalysis() {
                 </div>
               </div>
 
-              <div className="mt-4 grid gap-2.5 sm:grid-cols-3">
-                <div className="rounded-2xl border border-white/70 bg-white/65 p-3 text-center dark:border-slate-700/60 dark:bg-slate-900/55">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                    Employee
-                  </div>
-                  <div className="mt-1 text-sm font-medium text-slate-900 dark:text-slate-100">
-                    Narrow by teammate
-                  </div>
-                </div>
-                <div className="rounded-2xl border border-white/70 bg-white/65 p-3 text-center dark:border-slate-700/60 dark:bg-slate-900/55">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                    Call ID
-                  </div>
-                  <div className="mt-1 text-sm font-medium text-slate-900 dark:text-slate-100">
-                    Jump to one record
-                  </div>
-                </div>
-                <div className="rounded-2xl border border-white/70 bg-white/65 p-3 text-center dark:border-slate-700/60 dark:bg-slate-900/55">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                    Summary
-                  </div>
-                  <div className="mt-1 text-sm font-medium text-slate-900 dark:text-slate-100">
-                    Open the AI recap
-                  </div>
-                </div>
-              </div>
+              
             </div>
           </CardContent>
         </Card>
@@ -568,13 +542,13 @@ export function CallAnalysis() {
               <Table className="table-fixed">
                 <TableHeader className="bg-slate-950/[0.03] dark:bg-slate-50/[0.02]">
                   <TableRow className="hover:bg-transparent">
-                    <TableHead className={`${tableColumnWidth} text-left text-xs uppercase tracking-[0.14em] text-slate-500`}>Call ID</TableHead>
+                    <TableHead className="w-1/5 text-left text-xs uppercase tracking-[0.14em] text-slate-500">Call ID</TableHead>
                     {!isEmployee && (
-                      <TableHead className={`${tableColumnWidth} text-left text-xs uppercase tracking-[0.14em] text-slate-500`}>Employee</TableHead>
+                      <TableHead className="w-1/5 text-left text-xs uppercase tracking-[0.14em] text-slate-500">Employee</TableHead>
                     )}
-                    <TableHead className={`${tableColumnWidth} text-left text-xs uppercase tracking-[0.14em] text-slate-500`}>Satisfaction</TableHead>
-                    <TableHead className={`${tableColumnWidth} text-left text-xs uppercase tracking-[0.14em] text-slate-500`}>Sentiment</TableHead>
-                    <TableHead className={`${tableColumnWidth} text-left text-xs uppercase tracking-[0.14em] text-slate-500`}>Call Summary</TableHead>
+                    <TableHead className="w-1/5 text-left text-xs uppercase tracking-[0.14em] text-slate-500">Satisfaction</TableHead>
+                    <TableHead className="w-1/5 text-left text-xs uppercase tracking-[0.14em] text-slate-500">Sentiment</TableHead>
+                    <TableHead className="w-1/5 text-left text-xs uppercase tracking-[0.14em] text-slate-500">Call Summary</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -601,7 +575,7 @@ export function CallAnalysis() {
                       )}
 
                       <TableCell className="text-left align-middle">
-                        <div className="flex min-h-[64px] w-full max-w-[180px] flex-col justify-center space-y-2">
+                        <div className="mx-auto flex min-h-[64px] w-full max-w-[180px] flex-col justify-center space-y-2">
                           <div className="h-2.5 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
                             <div
                               className={cn("h-full rounded-full transition-all", getScoreBarTone(analysis.satisfaction_score))}
@@ -610,7 +584,7 @@ export function CallAnalysis() {
                           </div>
                           <Badge
                             variant="outline"
-                            className={cn("w-[96px] justify-center font-medium", getScoreTone(analysis.satisfaction_score))}
+                            className={cn("mx-auto w-[96px] justify-center font-medium", getScoreTone(analysis.satisfaction_score))}
                           >
                             {Number(analysis.satisfaction_score).toFixed(1)} / 4
                           </Badge>

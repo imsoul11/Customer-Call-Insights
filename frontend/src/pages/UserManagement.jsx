@@ -78,13 +78,12 @@ const UserManagement = () => {
 
     setExportConfig({
       filename: "users.csv",
-      headers: ["Employee ID", "Employee Name", "Phone", "Email", "Department", "Role"],
+      headers: ["Employee ID", "Employee Name", "Phone", "Email", "Role"],
       rows: users.map((entry) => [
         entry.eid,
         entry.name || entry.employee_name || "",
         entry.employee_phone || entry.phone || "",
         entry.email || "",
-        entry.department || "",
         entry.role || "",
       ]),
     });
@@ -133,12 +132,6 @@ const UserManagement = () => {
             placeholder="Email ID"
             value={newUserData.email}
             onChange={(e) => setNewUserData({ ...newUserData, email: e.target.value })}
-          />
-          <Input
-            type="text"
-            placeholder="Department"
-            value={newUserData.department}
-            onChange={(e) => setNewUserData({ ...newUserData, department: e.target.value })}
           />
 
           <Select
