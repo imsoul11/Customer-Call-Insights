@@ -169,6 +169,8 @@ export function CallLogs() {
     return employeeName === eid ? eid : `${employeeName} (${eid})`;
   };
 
+  const isEmployee = user?.role === "employee";
+
   useEffect(() => {
     async function fetchData() {
       try {
@@ -211,7 +213,7 @@ export function CallLogs() {
         const matchesStatus = selectedStatus === "All" ? true : log.status === selectedStatus;
         const matchesDepartment = selectedDepartment === "All" ? true : log.department === selectedDepartment;
 
-        if (user.role === "employee") {
+        if (isEmployee) {
           return log.eid === user.eid && matchesDate && matchesRegion && matchesStatus;
         }
 
@@ -236,11 +238,11 @@ export function CallLogs() {
   }, 0);
 
   const activeFilters = [
-    user?.role !== "employee" && selectedEid !== "E" ? `Employee: ${getEmployeeLabel(selectedEid)}` : null,
+    !isEmployee && selectedEid !== "E" ? `Employee: ${getEmployeeLabel(selectedEid)}` : null,
     selectedDate ? `Date: ${selectedDate}` : null,
     selectedRegion !== "All" ? `Region: ${selectedRegion}` : null,
     selectedStatus !== "All" ? `Status: ${selectedStatus}` : null,
-    user?.role !== "employee" && selectedDepartment !== "All" ? `Department: ${selectedDepartment}` : null,
+    !isEmployee && selectedDepartment !== "All" ? `Department: ${selectedDepartment}` : null,
   ].filter(Boolean);
 
   const totalPages = Math.max(1, Math.ceil(filteredLogs.length / ROWS_PER_PAGE));
@@ -300,7 +302,7 @@ export function CallLogs() {
       filename: "call-logs.csv",
       headers: [
         "Call ID",
-        "Employee",
+        ...(!isEmployee ? ["Employee"] : []),
         "Customer Phone",
         "Department",
         "Region",
@@ -310,7 +312,7 @@ export function CallLogs() {
       ],
       rows: paginatedLogs.map((log) => [
         log.cid,
-        getEmployeeLabel(log.eid),
+        ...(!isEmployee ? [getEmployeeLabel(log.eid)] : []),
         log.customer_phone,
         log.department,
         log.region,
@@ -326,6 +328,7 @@ export function CallLogs() {
     setExportConfig,
     user,
     employeeDirectory,
+    isEmployee,
   ]);
 
   if (loading || (isAuthenticated && user && isLoading)) {
@@ -358,7 +361,7 @@ export function CallLogs() {
 
             <div className="flex flex-wrap gap-2">
               <Badge className="border-white/15 bg-white/10 text-white/90 hover:bg-white/10">
-                {user.role === "employee" ? "Employee View" : "Manager View"}
+                {isEmployee ? "Employee View" : "Manager View"}
               </Badge>
               {activeFilters.length > 0 ? (
                 activeFilters.map((filterLabel) => (
@@ -403,7 +406,7 @@ export function CallLogs() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-3 sm:grid-cols-2">
-              {user.role !== "employee" && (
+              {!isEmployee && (
                 <Select value={selectedEid} onValueChange={setSelectedEid}>
                   <SelectTrigger className="h-11 border-slate-200 bg-white/90 shadow-sm shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-950/80 dark:shadow-none">
                     <SelectValue placeholder="Select Employee" />
@@ -455,7 +458,7 @@ export function CallLogs() {
                 </SelectContent>
               </Select>
 
-              {user.role !== "employee" && (
+              {!isEmployee && (
                 <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
                   <SelectTrigger className="h-11 border-slate-200 bg-white/90 shadow-sm shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-950/80 dark:shadow-none sm:col-span-2">
                     <SelectValue placeholder="Select Department" />
@@ -565,7 +568,9 @@ export function CallLogs() {
                 <TableHeader className="bg-slate-950/[0.03] dark:bg-slate-50/[0.02]">
                   <TableRow className="hover:bg-transparent">
                     <TableHead className="w-[110px] text-left text-xs uppercase tracking-[0.14em] text-slate-500">Call ID</TableHead>
-                    <TableHead className="w-[110px] text-left text-xs uppercase tracking-[0.14em] text-slate-500">Employee</TableHead>
+                    {!isEmployee && (
+                      <TableHead className="w-[110px] text-left text-xs uppercase tracking-[0.14em] text-slate-500">Employee</TableHead>
+                    )}
                     <TableHead className="w-[110px] text-left text-xs uppercase tracking-[0.14em] text-slate-500">Customer Phone</TableHead>
                     <TableHead className="w-[110px] text-left text-xs uppercase tracking-[0.14em] text-slate-500">Department</TableHead>
                     <TableHead className="w-[110px] text-left text-xs uppercase tracking-[0.14em] text-slate-500">Region</TableHead>
@@ -587,12 +592,14 @@ export function CallLogs() {
                         </span>
                       </TableCell>
 
-                      <TableCell className="text-left">
-                        <div className="flex max-w-[145px] flex-col">
-                          <span className="truncate font-medium text-slate-900 dark:text-slate-100">{getEmployeeName(log.eid)}</span>
-                          <span className="font-mono text-xs text-slate-500 dark:text-slate-400">{log.eid}</span>
-                        </div>
-                      </TableCell>
+                      {!isEmployee && (
+                        <TableCell className="text-left">
+                          <div className="flex max-w-[145px] flex-col">
+                            <span className="truncate font-medium text-slate-900 dark:text-slate-100">{getEmployeeName(log.eid)}</span>
+                            <span className="font-mono text-xs text-slate-500 dark:text-slate-400">{log.eid}</span>
+                          </div>
+                        </TableCell>
+                      )}
 
                       <TableCell className="text-left">
                         <span className="font-mono text-sm text-slate-700 dark:text-slate-200">{log.customer_phone}</span>

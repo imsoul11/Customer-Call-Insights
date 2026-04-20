@@ -261,14 +261,14 @@ export function CallAnalysis() {
       filename: "call-analysis.csv",
       headers: [
         "Call ID",
-        "Employee ID",
+        ...(!isEmployee ? ["Employee ID"] : []),
         "Satisfaction Score",
         "Sentiment Analysis",
         "Call Summary",
       ],
       rows: paginatedLogs.map((log) => [
         log.cid,
-        log.eid,
+        ...(!isEmployee ? [log.eid] : []),
         log.satisfaction_score,
         log.sentiment_analysis,
         log.call_summary,
@@ -276,7 +276,7 @@ export function CallAnalysis() {
     });
 
     return () => setExportConfig(null);
-  }, [paginatedLogs, user, setExportConfig]);
+  }, [isEmployee, paginatedLogs, user, setExportConfig]);
 
   if (loading || (isAuthenticated && user && pageLoading)) {
     return <PageLoading variant="table" />;
@@ -568,7 +568,9 @@ export function CallAnalysis() {
                 <TableHeader className="bg-slate-950/[0.03] dark:bg-slate-50/[0.02]">
                   <TableRow className="hover:bg-transparent">
                     <TableHead className="w-1/5 text-left text-xs uppercase tracking-[0.14em] text-slate-500">Call ID</TableHead>
-                    <TableHead className="w-1/5 text-left text-xs uppercase tracking-[0.14em] text-slate-500">Employee</TableHead>
+                    {!isEmployee && (
+                      <TableHead className="w-1/5 text-left text-xs uppercase tracking-[0.14em] text-slate-500">Employee</TableHead>
+                    )}
                     <TableHead className="w-1/5 text-left text-xs uppercase tracking-[0.14em] text-slate-500">Satisfaction</TableHead>
                     <TableHead className="w-1/5 text-left text-xs uppercase tracking-[0.14em] text-slate-500">Sentiment</TableHead>
                     <TableHead className="w-1/5 text-left text-xs uppercase tracking-[0.14em] text-slate-500">Call Summary</TableHead>
@@ -586,14 +588,16 @@ export function CallAnalysis() {
                         </span>
                       </TableCell>
 
-                      <TableCell className="text-left">
-                        <div className="flex w-full max-w-full flex-col pr-3">
-                          <span className="truncate font-medium text-slate-900 dark:text-slate-100">
-                            {getEmployeeName(analysis.eid)}
-                          </span>
-                          <span className="font-mono text-xs text-slate-500 dark:text-slate-400">{analysis.eid}</span>
-                        </div>
-                      </TableCell>
+                      {!isEmployee && (
+                        <TableCell className="text-left">
+                          <div className="flex w-full max-w-full flex-col pr-3">
+                            <span className="truncate font-medium text-slate-900 dark:text-slate-100">
+                              {getEmployeeName(analysis.eid)}
+                            </span>
+                            <span className="font-mono text-xs text-slate-500 dark:text-slate-400">{analysis.eid}</span>
+                          </div>
+                        </TableCell>
+                      )}
 
                       <TableCell className="text-left align-middle">
                         <div className="mx-auto flex min-h-[64px] w-full max-w-[180px] flex-col justify-center space-y-2">
