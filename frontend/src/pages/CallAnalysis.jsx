@@ -165,6 +165,7 @@ export function CallAnalysis() {
   }, []);
 
   const isEmployee = user?.role === "employee";
+  const tableColumnWidth = isEmployee ? "w-1/4" : "w-1/5";
 
   const filteredLogs = callAnalysis.filter((log) => {
     const matchesEid = isEmployee
@@ -567,13 +568,13 @@ export function CallAnalysis() {
               <Table className="table-fixed">
                 <TableHeader className="bg-slate-950/[0.03] dark:bg-slate-50/[0.02]">
                   <TableRow className="hover:bg-transparent">
-                    <TableHead className="w-1/5 text-left text-xs uppercase tracking-[0.14em] text-slate-500">Call ID</TableHead>
+                    <TableHead className={`${tableColumnWidth} text-left text-xs uppercase tracking-[0.14em] text-slate-500`}>Call ID</TableHead>
                     {!isEmployee && (
-                      <TableHead className="w-1/5 text-left text-xs uppercase tracking-[0.14em] text-slate-500">Employee</TableHead>
+                      <TableHead className={`${tableColumnWidth} text-left text-xs uppercase tracking-[0.14em] text-slate-500`}>Employee</TableHead>
                     )}
-                    <TableHead className="w-1/5 text-left text-xs uppercase tracking-[0.14em] text-slate-500">Satisfaction</TableHead>
-                    <TableHead className="w-1/5 text-left text-xs uppercase tracking-[0.14em] text-slate-500">Sentiment</TableHead>
-                    <TableHead className="w-1/5 text-left text-xs uppercase tracking-[0.14em] text-slate-500">Call Summary</TableHead>
+                    <TableHead className={`${tableColumnWidth} text-left text-xs uppercase tracking-[0.14em] text-slate-500`}>Satisfaction</TableHead>
+                    <TableHead className={`${tableColumnWidth} text-left text-xs uppercase tracking-[0.14em] text-slate-500`}>Sentiment</TableHead>
+                    <TableHead className={`${tableColumnWidth} text-left text-xs uppercase tracking-[0.14em] text-slate-500`}>Call Summary</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -600,7 +601,7 @@ export function CallAnalysis() {
                       )}
 
                       <TableCell className="text-left align-middle">
-                        <div className="mx-auto flex min-h-[64px] w-full max-w-[180px] flex-col justify-center space-y-2">
+                        <div className="flex min-h-[64px] w-full max-w-[180px] flex-col justify-center space-y-2">
                           <div className="h-2.5 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
                             <div
                               className={cn("h-full rounded-full transition-all", getScoreBarTone(analysis.satisfaction_score))}
@@ -609,7 +610,7 @@ export function CallAnalysis() {
                           </div>
                           <Badge
                             variant="outline"
-                            className={cn("mx-auto w-[96px] justify-center font-medium", getScoreTone(analysis.satisfaction_score))}
+                            className={cn("w-[96px] justify-center font-medium", getScoreTone(analysis.satisfaction_score))}
                           >
                             {Number(analysis.satisfaction_score).toFixed(1)} / 4
                           </Badge>
