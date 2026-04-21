@@ -1,4 +1,4 @@
-import { PhoneCall, Calendar, LayoutDashboard, ListFilter, Search, Settings } from "lucide-react";
+import { PhoneCall, Calendar, LayoutDashboard, ListFilter, Search, Settings, Sparkles } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -30,6 +30,12 @@ const items = [
     url: "/dashboard/callanalysis",
     icon: ListFilter,
     role: "manager | employee",
+  },
+  {
+    title: "Generate AI",
+    url: "/dashboard/generate-analysis",
+    icon: Sparkles,
+    role: "manager",
   },
   {
     title: "Leaderboard",

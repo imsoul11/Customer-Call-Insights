@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Navigate } from "react-router-dom";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
@@ -132,8 +132,10 @@ export function CallAnalysis() {
         ]);
 
         if (response.data.success) {
-          const uniqueEids = [...new Set(response.data.data.map((item) => item.eid))].sort();
-          setCallAnalysis(response.data.data);
+          const aiData = response.data.data || [];
+          const uniqueEids = [...new Set(aiData.map((item) => item.eid).filter(Boolean))].sort();
+
+          setCallAnalysis(aiData);
           setEmployeeIds(uniqueEids);
           setEmployeeDirectory(
             users.reduce((accumulator, entry) => {
@@ -166,19 +168,21 @@ export function CallAnalysis() {
 
   const isEmployee = user?.role === "employee";
 
-  const filteredLogs = callAnalysis.filter((log) => {
-    const matchesEid = isEmployee
-      ? log.eid === user?.eid
-      : selectedEid === "E"
-        ? true
-        : log.eid === selectedEid;
+  const filteredLogs = useMemo(() => (
+    callAnalysis.filter((log) => {
+      const matchesEid = isEmployee
+        ? log.eid === user?.eid
+        : selectedEid === "E"
+          ? true
+          : log.eid === selectedEid;
 
-    const matchesCall = selectedCall
-      ? log.cid.toLowerCase().includes(selectedCall.toLowerCase())
-      : true;
+      const matchesCall = selectedCall
+        ? String(log.cid || "").toLowerCase().includes(selectedCall.toLowerCase())
+        : true;
 
-    return matchesEid && matchesCall;
-  });
+      return matchesEid && matchesCall;
+    })
+  ), [callAnalysis, isEmployee, selectedCall, selectedEid, user?.eid]);
 
   const sentimentCounts = filteredLogs.reduce(
     (accumulator, log) => {
@@ -205,10 +209,12 @@ export function CallAnalysis() {
     selectedCall ? `Call Search: ${selectedCall}` : null,
   ].filter(Boolean);
   const totalPages = Math.max(1, Math.ceil(filteredLogs.length / ROWS_PER_PAGE));
-  const paginatedLogs = filteredLogs.slice(
-    (currentPage - 1) * ROWS_PER_PAGE,
-    currentPage * ROWS_PER_PAGE
-  );
+  const paginatedLogs = useMemo(() => (
+    filteredLogs.slice(
+      (currentPage - 1) * ROWS_PER_PAGE,
+      currentPage * ROWS_PER_PAGE
+    )
+  ), [currentPage, filteredLogs]);
   const visibleStart = filteredLogs.length ? (currentPage - 1) * ROWS_PER_PAGE + 1 : 0;
   const visibleEnd = filteredLogs.length
     ? Math.min(currentPage * ROWS_PER_PAGE, filteredLogs.length)
@@ -254,7 +260,7 @@ export function CallAnalysis() {
   useEffect(() => {
     if (!user) {
       setExportConfig(null);
-      return () => setExportConfig(null);
+      return;
     }
 
     setExportConfig({
@@ -274,9 +280,19 @@ export function CallAnalysis() {
         log.call_summary,
       ]),
     });
+  }, [
+    callAnalysis,
+    currentPage,
+    isEmployee,
+    paginatedLogs,
+    selectedCall,
+    selectedEid,
+    setExportConfig,
+    user?.eid,
+    user?.role,
+  ]);
 
-    return () => setExportConfig(null);
-  }, [isEmployee, paginatedLogs, user, setExportConfig]);
+  useEffect(() => () => setExportConfig(null), [setExportConfig]);
 
   if (loading || (isAuthenticated && user && pageLoading)) {
     return <PageLoading variant="table" />;

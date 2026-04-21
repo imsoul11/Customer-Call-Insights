@@ -9,6 +9,7 @@ import { ExportContext } from './context/ExportContext';
 import Login from './pages/Login';
 import Leaderboard from './pages/Leaderboard';
 import UserManagement from './pages/UserManagement'; // Assuming this page exists
+import GenerateAnalysis from './pages/GenerateAnalysis';
 
 const ProtectedRoute = ({ allowedRoles, children }) => {
   const { user } = useAuth(); // Assuming useAuth provides the user role
@@ -47,6 +48,14 @@ const App = () => {
                 <Route path="dashboard/calllogs" element={<CallLogs />} />
                 <Route path="dashboard/callanalysis" element={<CallAnalysis />} />
                 <Route path="dashboard/leaderboard" element={<Leaderboard />} />
+                <Route
+                  path="dashboard/generate-analysis"
+                  element={
+                    <ProtectedRoute allowedRoles={['manager']}>
+                      <GenerateAnalysis />
+                    </ProtectedRoute>
+                  }
+                />
               </>
             )}
 

@@ -9,14 +9,18 @@ const bodyParser = require('body-parser');
 
 const app = express();
 
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
+app.set('trust proxy', true);
+
+app.use(bodyParser.urlencoded({ extended: true, limit: '1mb' }));
+app.use(bodyParser.json({ limit: '1mb' }));
 app.use(cors({
   origin: process.env.FRONTEND_URL // Adjust this to your frontend URL
 }));
 
 const mongoRoute = require('./Routes/mongo.js');
+const aiRoute = require('./Routes/ai.js');
 app.use('/api/data', mongoRoute);
+app.use('/api/ai', aiRoute);
 
 //mail template route
 app.post('/send-welcome-email', async (req, res) => {

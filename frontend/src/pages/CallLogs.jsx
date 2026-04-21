@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Navigate } from "react-router-dom";
 import {
   Table,
@@ -205,22 +205,33 @@ export function CallLogs() {
     fetchData();
   }, []);
 
-  const filteredLogs = user
-    ? callLogs.filter((log) => {
-        const logDate = formatDate(log.timestamp);
-        const matchesDate = selectedDate ? logDate === selectedDate : true;
-        const matchesRegion = selectedRegion === "All" ? true : log.region === selectedRegion;
-        const matchesStatus = selectedStatus === "All" ? true : log.status === selectedStatus;
-        const matchesDepartment = selectedDepartment === "All" ? true : log.department === selectedDepartment;
+  const filteredLogs = useMemo(() => (
+    user
+      ? callLogs.filter((log) => {
+          const logDate = formatDate(log.timestamp);
+          const matchesDate = selectedDate ? logDate === selectedDate : true;
+          const matchesRegion = selectedRegion === "All" ? true : log.region === selectedRegion;
+          const matchesStatus = selectedStatus === "All" ? true : log.status === selectedStatus;
+          const matchesDepartment = selectedDepartment === "All" ? true : log.department === selectedDepartment;
 
-        if (isEmployee) {
-          return log.eid === user.eid && matchesDate && matchesRegion && matchesStatus;
-        }
+          if (isEmployee) {
+            return log.eid === user.eid && matchesDate && matchesRegion && matchesStatus;
+          }
 
-        const matchesEid = selectedEid === "E" ? true : log.eid === selectedEid;
-        return matchesEid && matchesDate && matchesRegion && matchesStatus && matchesDepartment;
-      })
-    : [];
+          const matchesEid = selectedEid === "E" ? true : log.eid === selectedEid;
+          return matchesEid && matchesDate && matchesRegion && matchesStatus && matchesDepartment;
+        })
+      : []
+  ), [
+    callLogs,
+    isEmployee,
+    selectedDate,
+    selectedDepartment,
+    selectedEid,
+    selectedRegion,
+    selectedStatus,
+    user,
+  ]);
 
   const uniqueEids = [...new Set(callLogs.map((log) => log.eid).filter(Boolean))].sort();
   const uniqueRegions = [...new Set(callLogs.map((log) => log.region).filter(Boolean))].sort();
@@ -245,10 +256,12 @@ export function CallLogs() {
   ].filter(Boolean);
 
   const totalPages = Math.max(1, Math.ceil(filteredLogs.length / ROWS_PER_PAGE));
-  const paginatedLogs = filteredLogs.slice(
-    (currentPage - 1) * ROWS_PER_PAGE,
-    currentPage * ROWS_PER_PAGE
-  );
+  const paginatedLogs = useMemo(() => (
+    filteredLogs.slice(
+      (currentPage - 1) * ROWS_PER_PAGE,
+      currentPage * ROWS_PER_PAGE
+    )
+  ), [currentPage, filteredLogs]);
   const visibleStart = filteredLogs.length ? (currentPage - 1) * ROWS_PER_PAGE + 1 : 0;
   const visibleEnd = filteredLogs.length
     ? Math.min(currentPage * ROWS_PER_PAGE, filteredLogs.length)
@@ -294,7 +307,7 @@ export function CallLogs() {
   useEffect(() => {
     if (!user) {
       setExportConfig(null);
-      return () => setExportConfig(null);
+      return;
     }
 
     setExportConfig({
@@ -318,15 +331,23 @@ export function CallLogs() {
         log.duration,
       ]),
     });
-
-    return () => setExportConfig(null);
   }, [
-    paginatedLogs,
-    setExportConfig,
-    user,
+    callLogs,
+    currentPage,
     employeeDirectory,
     isEmployee,
+    paginatedLogs,
+    selectedDate,
+    selectedDepartment,
+    selectedEid,
+    selectedRegion,
+    selectedStatus,
+    setExportConfig,
+    user?.eid,
+    user?.role,
   ]);
+
+  useEffect(() => () => setExportConfig(null), [setExportConfig]);
 
   if (loading || (isAuthenticated && user && isLoading)) {
     return <PageLoading variant="table" />;
