@@ -1,14 +1,23 @@
 import React, { createContext, useState, useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { signOut, onAuthStateChanged } from "firebase/auth";
-import { auth, db } from "../firebase";
-import { collection, query, where, getDocs } from "firebase/firestore"; // Import necessary Firestore functions
 import Cookies from "js-cookie"; // Import js-cookie
+import { fetchBackendUsers } from "../lib/backendData";
 
 
 const AuthContext = createContext();
 
 export const useAuth = () => useContext(AuthContext);
+
+const buildSessionUser = (userData = {}) => ({
+    eid: userData.eid,
+    role: userData.role,
+    phone: userData.phone || userData.employee_phone,
+    cids: userData.cids,
+    name: userData.name || userData.employee_name,
+    employee_name: userData.employee_name,
+    employee_phone: userData.employee_phone,
+    email: userData.email,
+});
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
@@ -22,33 +31,20 @@ export const AuthProvider = ({ children }) => {
         setLoading(true);
         setError('');
         try {
-            // Create a query to find the user document with the specified EID
-            const userQuery = query(collection(db, 'users'), where('eid', '==', eid));
-            const querySnapshot = await getDocs(userQuery);
-            // Check if the query returned any documents
-            if (!querySnapshot.empty) {
-                const userData = querySnapshot.docs[0].data(); // Get the first document's data
+            const users = await fetchBackendUsers();
+            const normalizedEid = eid.trim();
+            const userData = users.find((entry) => entry.eid === normalizedEid);
 
-                // Check if provided password matches the stored password
+            if (userData) {
                 if (userData.password === password) {
-                    // Set the user state and mark as authenticated
-                    setUser({
-                        eid: userData.eid,
-                        role: userData.role,
-                        phone: userData.phone || userData.employee_phone,
-                        cids: userData.cids,
-                        name: userData.name || userData.employee_name,
-                        employee_name: userData.employee_name,
-                    });
+                    setUser(buildSessionUser(userData));
                     setIsAuthenticated(true);
                     
-                    // Set a cookie for the user
                     Cookies.set('userEid', `${userData.eid}-${userData.password}`, { expires: 7 }); // Cookie expires in 7 days
                 } else {
                     setError('Incorrect password');
                 }
             } else {
-                console.error('No user found with the specified EID.');
                 setError('EID not found');
             }
         } catch (err) {
@@ -62,38 +58,29 @@ export const AuthProvider = ({ children }) => {
     // Function to handle logout
     const logout = async () => {
         setLoading(true);
-        await signOut(auth);
-        setUser(null);
-        setIsAuthenticated(false); // Set authentication to false after logout
-        
-        // Remove the cookie on logout
-        Cookies.remove('userEid'); 
+        handleLogout();
         setLoading(false);
     };
 
     // Check if the user is authenticated on initial load
      useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+        const restoreSession = async () => {
             setLoading(true); // Set loading while checking auth state
 
-            // Check if userEid cookie exists
             const userEidCookie = Cookies.get("userEid");
 
             if (userEidCookie) {
-                const [eid, password] = userEidCookie.split("-"); // Extract EID and password
+                const separatorIndex = userEidCookie.indexOf("-");
+                const eid = separatorIndex === -1 ? userEidCookie : userEidCookie.slice(0, separatorIndex);
+                const password = separatorIndex === -1 ? "" : userEidCookie.slice(separatorIndex + 1);
 
                 try {
-                    // Query Firestore to find the employee document
-                    const userQuery = query(collection(db, "users"), where("eid", "==", eid));
-                    const querySnapshot = await getDocs(userQuery);
+                    const users = await fetchBackendUsers();
+                    const userData = users.find((entry) => entry.eid === eid);
 
-                    if (!querySnapshot.empty) {
-                        const userData = querySnapshot.docs[0].data();
-
-                        // Check if the password matches
+                    if (userData) {
                         if (userData.password === password) {
-                            // Set user details and authentication state
-                            setUser({ eid: userData.eid, ...userData });
+                            setUser(buildSessionUser(userData));
                             setIsAuthenticated(true);
                         } else {
                             console.warn("Password mismatch for EID:", eid);
@@ -115,10 +102,10 @@ export const AuthProvider = ({ children }) => {
             }
 
             setLoading(false); // Stop loading after checks
-        });
+        };
 
-        return () => unsubscribe(); // Cleanup on unmount
-    }, []);
+        restoreSession();
+    }, [navigate]);
 
     // Handle logout, remove cookies and redirect to login
     const handleLogout = () => {

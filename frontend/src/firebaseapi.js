@@ -15,6 +15,25 @@ export async function fetchCallRecords() {
   return callRecords;
 }
 
+export async function migrateFirebaseDataToMongo() {
+  const [users, calls] = await Promise.all([fetchUsers(), fetchCallRecords()]);
+
+  const response = await axios.post(
+    buildApiUrl("/api/migration/firebase"),
+    {
+      users,
+      calls,
+    },
+    {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  return response.data;
+}
+
 // Function to push dummy call records to Firestore
 export async function pushDummyData() {
   const dummyData2=[

@@ -7,7 +7,7 @@ import { useAuth } from "../context/AuthContext"; // Import Auth context
 import { useExport } from "../context/ExportContext";
 import { Navigate } from "react-router-dom";
 import PageLoading from "../components/PageLoading";
-import { fetchUsers, updateUserRole, deleteUser, addUser } from "../firebaseapi"; // Import Firebase functions
+import { fetchUsers, updateUserRole, deleteUser, addUser, migrateFirebaseDataToMongo } from "../firebaseapi"; // Import Firebase functions
 
 const UserManagement = () => {
   const { user, logout, isAuthenticated, loading } = useAuth();
@@ -17,6 +17,7 @@ const UserManagement = () => {
   const [newUserData, setNewUserData] = useState({employee_name:"", employee_phone: "", email: "", role: "employee", department: "" }); // New user form state
   const [successMessage, setSuccessMessage] = useState(null); // State to show success message
   const [pageLoading, setPageLoading] = useState(true);
+  const [migrationLoading, setMigrationLoading] = useState(false);
 
   useEffect(() => {
     // Fetch users from Firebase when component mounts
@@ -67,6 +68,25 @@ const UserManagement = () => {
     } catch (err) {
       setError("Error deleting user.");
       console.error(err);
+    }
+  };
+
+  const handleMongoMigration = async () => {
+    setMigrationLoading(true);
+    setError(null);
+
+    try {
+      const response = await migrateFirebaseDataToMongo();
+      const migrationSummary = response?.data;
+
+      setSuccessMessage(
+        `Firebase data migrated to Mongo. Users imported: ${migrationSummary?.users_imported || 0}, calls imported: ${migrationSummary?.calls_imported || 0}.`
+      );
+    } catch (err) {
+      setError("Error migrating Firebase data to MongoDB.");
+      console.error(err);
+    } finally {
+      setMigrationLoading(false);
     }
   };
 
@@ -149,6 +169,21 @@ const UserManagement = () => {
           <Button onClick={handleAddUser} className="w-full mt-4">Add User</Button>
         </div>
       </div>
+      {user.role === "admin" && (
+        <div className="mt-8">
+          <h3 className="text-lg font-semibold mb-4">MongoDB Migration</h3>
+          <Card className="mb-6">
+            <CardContent className="pt-6">
+              <p className="text-sm text-slate-600 mb-4">
+                Copy all current Firebase `users` and `calls` records into MongoDB so we can switch the app over collection by collection later.
+              </p>
+              <Button onClick={handleMongoMigration} disabled={migrationLoading}>
+                {migrationLoading ? "Migrating..." : "Migrate Firebase Data to Mongo"}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
       {user.role === "admin" && (
         <div className="user-list">
           <h3 className="text-lg font-semibold mb-4">Manage Users</h3>

@@ -28,12 +28,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { fetchBackendUsers } from "@/lib/backendData";
 import { cn } from "@/lib/utils";
 import { buildApiUrl } from "@/lib/api";
 import { useExport } from "../context/ExportContext";
 import { useAuth } from "../context/AuthContext";
 import PageLoading from "../components/PageLoading";
-import { fetchUsers } from "../firebaseapi";
 import { FileText, ListFilter, PhoneCall, Star, TrendingUp, Users } from "lucide-react";
 
 const ROWS_PER_PAGE = 15;
@@ -128,7 +128,7 @@ export function CallAnalysis() {
       try {
         const [response, users] = await Promise.all([
           axios.get(buildApiUrl("/api/data/all")),
-          fetchUsers(),
+          fetchBackendUsers(),
         ]);
 
         if (response.data.success) {

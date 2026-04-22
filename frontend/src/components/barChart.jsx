@@ -26,8 +26,11 @@ function parseDuration(durationString) {
   function processChartData(logs) {
     const durationByMonth = {};
   
-    logs.forEach((log) => {
+  logs.forEach((log) => {
       const date = new Date(log.timestamp);
+      if (Number.isNaN(date.getTime())) {
+        return;
+      }
       const month = date.toLocaleString("default", { month: "long" });
       const year = date.getFullYear(); // Optional year separation
   

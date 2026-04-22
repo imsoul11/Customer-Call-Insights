@@ -1,4 +1,5 @@
 const AIdata = require('../Models/aidata');
+const Call = require('../Models/call');
 const { analyzeCallWithGemini } = require('../services/geminiService');
 const {
   getQuotaStatus,
@@ -32,15 +33,26 @@ function getTrimmedField(value) {
   return typeof value === 'string' ? value.trim() : '';
 }
 
+function getDurationInSeconds(duration = '') {
+  const normalizedDuration = String(duration || '');
+  const minutesMatch = normalizedDuration.match(/(\d+)\s*m/i);
+  const secondsMatch = normalizedDuration.match(/(\d+)\s*s/i);
+
+  return (minutesMatch ? Number(minutesMatch[1]) * 60 : 0) +
+    (secondsMatch ? Number(secondsMatch[1]) : 0);
+}
+
 function buildCallPayload(body = {}) {
   return {
     cid: getTrimmedField(body.cid),
     eid: getTrimmedField(body.eid),
     status: getTrimmedField(body.status),
-    timestamp: body.timestamp,
+    timestamp: getTrimmedField(body.timestamp),
     region: getTrimmedField(body.region),
     customer_phone: getTrimmedField(body.customer_phone),
     employee_phone: getTrimmedField(body.employee_phone),
+    duration: getTrimmedField(body.duration),
+    department: getTrimmedField(body.department),
     transcript: getTranscript(body),
   };
 }
@@ -48,12 +60,16 @@ function buildCallPayload(body = {}) {
 function validateCallPayload(callPayload) {
   const validationErrors = [];
 
-  if (!callPayload.cid) {
-    validationErrors.push('cid is required.');
-  }
-
   if (!callPayload.eid) {
     validationErrors.push('eid is required.');
+  }
+
+  if (!callPayload.customer_phone) {
+    validationErrors.push('customer_phone is required.');
+  }
+
+  if (getDurationInSeconds(callPayload.duration) <= 0) {
+    validationErrors.push('duration must be greater than 0 seconds.');
   }
 
   if (!callPayload.transcript) {
@@ -61,6 +77,60 @@ function validateCallPayload(callPayload) {
   }
 
   return validationErrors;
+}
+
+function generateCallIdCandidate() {
+  return `CID${Math.floor(10000 + Math.random() * 90000)}`;
+}
+
+async function ensureCallId(existingCid) {
+  if (existingCid) {
+    return existingCid;
+  }
+
+  for (let attempt = 0; attempt < 25; attempt += 1) {
+    const candidateCid = generateCallIdCandidate();
+    const [existingCall, existingAnalysis] = await Promise.all([
+      Call.exists({ cid: candidateCid }),
+      AIdata.exists({ cid: candidateCid }),
+    ]);
+
+    if (!existingCall && !existingAnalysis) {
+      return candidateCid;
+    }
+  }
+
+  return `CID${Date.now().toString().slice(-8)}`;
+}
+
+function buildRawCallDocument(callPayload) {
+  return {
+    cid: callPayload.cid,
+    eid: callPayload.eid,
+    customer_phone: callPayload.customer_phone,
+    employee_phone: callPayload.employee_phone,
+    status: callPayload.status,
+    timestamp: callPayload.timestamp,
+    duration: callPayload.duration,
+    region: callPayload.region,
+    conversation_text: callPayload.transcript,
+    department: callPayload.department,
+  };
+}
+
+async function upsertRawCall(callPayload) {
+  return Call.findOneAndUpdate(
+    { cid: callPayload.cid },
+    {
+      $set: buildRawCallDocument(callPayload),
+    },
+    {
+      new: true,
+      upsert: true,
+      runValidators: true,
+      setDefaultsOnInsert: true,
+    }
+  );
 }
 
 async function analyzeCall(req, res) {
@@ -75,6 +145,9 @@ async function analyzeCall(req, res) {
   }
 
   try {
+    callPayload.cid = await ensureCallId(callPayload.cid);
+    await upsertRawCall(callPayload);
+
     const existingAnalysis = await AIdata.findOne({ cid: callPayload.cid });
 
     if (existingAnalysis) {
@@ -82,6 +155,7 @@ async function analyzeCall(req, res) {
         success: true,
         cached: true,
         data: existingAnalysis,
+        call: buildRawCallDocument(callPayload),
         quota: await getQuotaStatus(),
       });
     }
@@ -105,6 +179,7 @@ async function analyzeCall(req, res) {
         success: false,
         message: 'Failed to generate AI analysis.',
         error: providerError.message,
+        call: buildRawCallDocument(callPayload),
         quota: await refundQuotaSlot(),
       });
     }
@@ -131,6 +206,7 @@ async function analyzeCall(req, res) {
         success: true,
         cached: false,
         data: savedAnalysis,
+        call: buildRawCallDocument(callPayload),
         quota: await getQuotaStatus(),
       });
     } catch (saveError) {
@@ -142,6 +218,7 @@ async function analyzeCall(req, res) {
             success: true,
             cached: true,
             data: existingDocument,
+            call: buildRawCallDocument(callPayload),
             quota: await getQuotaStatus(),
           });
         }
@@ -151,6 +228,7 @@ async function analyzeCall(req, res) {
         success: false,
         message: 'AI analysis was generated, but saving it failed.',
         error: saveError.message,
+        call: buildRawCallDocument(callPayload),
         quota: await getQuotaStatus(),
       });
     }

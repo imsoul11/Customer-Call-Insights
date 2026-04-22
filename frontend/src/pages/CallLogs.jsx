@@ -25,12 +25,13 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { CALLS_UPDATED_EVENT, CALLS_UPDATED_STORAGE_KEY } from "@/lib/callSync";
 import { cn } from "@/lib/utils";
 import { Clock3, Globe2, PhoneCall, TrendingUp, Users } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useExport } from "@/context/ExportContext";
+import { fetchBackendCallRecords, fetchBackendUsers } from "@/lib/backendData";
 import PageLoading from "../components/PageLoading";
-import { fetchCallRecords, fetchUsers } from "../firebaseapi.js";
 import { BarChartCom } from "@/components/barChart.jsx";
 
 const ROWS_PER_PAGE = 15;
@@ -44,8 +45,18 @@ const tokenPalette = [
   "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-200",
 ];
 
+function getValidDate(timestamp) {
+  const parsedDate = new Date(timestamp);
+  return Number.isNaN(parsedDate.getTime()) ? null : parsedDate;
+}
+
 function formatDate(timestamp) {
-  const date = new Date(timestamp);
+  const date = getValidDate(timestamp);
+
+  if (!date) {
+    return "";
+  }
+
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
@@ -53,18 +64,30 @@ function formatDate(timestamp) {
 }
 
 function formatDisplayDate(timestamp) {
+  const date = getValidDate(timestamp);
+
+  if (!date) {
+    return String(timestamp || "N/A");
+  }
+
   return new Intl.DateTimeFormat("en-IN", {
     day: "2-digit",
     month: "short",
     year: "numeric",
-  }).format(new Date(timestamp));
+  }).format(date);
 }
 
 function formatDisplayTime(timestamp) {
+  const date = getValidDate(timestamp);
+
+  if (!date) {
+    return "";
+  }
+
   return new Intl.DateTimeFormat("en-IN", {
     hour: "numeric",
     minute: "2-digit",
-  }).format(new Date(timestamp));
+  }).format(date);
 }
 
 function parseDuration(duration = "") {
@@ -172,9 +195,19 @@ export function CallLogs() {
   const isEmployee = user?.role === "employee";
 
   useEffect(() => {
+    let isMounted = true;
+
     async function fetchData() {
+      if (isMounted) {
+        setError(null);
+      }
+
       try {
-        const [data, users] = await Promise.all([fetchCallRecords(), fetchUsers()]);
+        const [data, users] = await Promise.all([fetchBackendCallRecords(), fetchBackendUsers()]);
+
+        if (!isMounted) {
+          return;
+        }
 
         if (data) {
           setCallLogs(data);
@@ -195,14 +228,38 @@ export function CallLogs() {
           }, {})
         );
       } catch (fetchError) {
+        if (!isMounted) {
+          return;
+        }
+
         setError("Failed to fetch call logs. Please try again later.");
         console.error("Error fetching call records:", fetchError);
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    function handleCallsUpdated() {
+      fetchData();
+    }
+
+    function handleStorage(event) {
+      if (event.key === CALLS_UPDATED_STORAGE_KEY) {
+        fetchData();
       }
     }
 
     fetchData();
+    window.addEventListener(CALLS_UPDATED_EVENT, handleCallsUpdated);
+    window.addEventListener("storage", handleStorage);
+
+    return () => {
+      isMounted = false;
+      window.removeEventListener(CALLS_UPDATED_EVENT, handleCallsUpdated);
+      window.removeEventListener("storage", handleStorage);
+    };
   }, []);
 
   const filteredLogs = useMemo(() => (
@@ -373,7 +430,7 @@ export function CallLogs() {
               <h1 className="text-3xl font-semibold tracking-tight">Call Logs</h1>
               <p className="max-w-2xl text-sm text-white/75">
                 Review customer conversations, scan operational load, and spot shifts in activity across teams,
-                regions, and call directions from one cleaner workspace.
+                regions, and call directions.
               </p>
             </div>
 

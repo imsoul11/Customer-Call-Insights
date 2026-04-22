@@ -19,8 +19,14 @@ app.use(cors({
 
 const mongoRoute = require('./Routes/mongo.js');
 const aiRoute = require('./Routes/ai.js');
+const userRoute = require('./Routes/users.js');
+const callRoute = require('./Routes/calls.js');
+const migrationRoute = require('./Routes/migration.js');
 app.use('/api/data', mongoRoute);
 app.use('/api/ai', aiRoute);
+app.use('/api/users', userRoute);
+app.use('/api/calls', callRoute);
+app.use('/api/migration', migrationRoute);
 
 //mail template route
 app.post('/send-welcome-email', async (req, res) => {

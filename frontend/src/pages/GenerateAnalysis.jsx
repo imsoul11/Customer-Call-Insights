@@ -21,6 +21,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { buildApiUrl } from "@/lib/api";
+import { notifyCallsUpdated } from "@/lib/callSync";
 import { useAuth } from "@/context/AuthContext";
 import PageLoading from "../components/PageLoading";
 import { FileText, ShieldAlert, ShieldCheck, Sparkles, Star } from "lucide-react";
@@ -34,21 +35,26 @@ const defaultQuotaStatus = {
 
 const statusOptions = ["incoming", "outgoing", "missed", "escalated"];
 
-function generateCallId() {
-  return `CID${Math.floor(10000 + Math.random() * 90000)}`;
-}
-
 function buildInitialFormData(user) {
   return {
-    cid: generateCallId(),
     eid: user?.eid || "",
     status: "incoming",
     timestamp: new Date().toISOString().slice(0, 16),
+    duration: "",
     region: "",
     customer_phone: "",
     employee_phone: user?.phone || user?.employee_phone || "",
     transcript: "",
   };
+}
+
+function parseDurationToSeconds(duration = "") {
+  const normalizedDuration = String(duration || "");
+  const minutesMatch = normalizedDuration.match(/(\d+)\s*m/i);
+  const secondsMatch = normalizedDuration.match(/(\d+)\s*s/i);
+
+  return (minutesMatch ? Number(minutesMatch[1]) * 60 : 0) +
+    (secondsMatch ? Number(secondsMatch[1]) : 0);
 }
 
 function getQuotaTone(quotaStatus) {
@@ -100,7 +106,10 @@ export function GenerateAnalysis() {
   const [submitSuccess, setSubmitSuccess] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [analysisResult, setAnalysisResult] = useState(null);
+  const [lastSavedCallId, setLastSavedCallId] = useState("");
   const [formData, setFormData] = useState(() => buildInitialFormData(user));
+  const canGenerateAnalysis = user?.role === "manager" || user?.role === "employee";
+  const roleLabel = user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : "User";
 
   useEffect(() => {
     const fetchPageData = async () => {
@@ -131,7 +140,6 @@ export function GenerateAnalysis() {
 
     setFormData((previous) => ({
       ...previous,
-      cid: previous.cid || generateCallId(),
       eid: user.eid || "",
       employee_phone: previous.employee_phone || user.phone || user.employee_phone || "",
     }));
@@ -145,7 +153,7 @@ export function GenerateAnalysis() {
     return <Navigate to="/login" replace />;
   }
 
-  if (user.role !== "manager") {
+  if (!canGenerateAnalysis) {
     return <Navigate to="/dashboard/callanalysis" replace />;
   }
 
@@ -162,33 +170,97 @@ export function GenerateAnalysis() {
     setSubmitSuccess("");
     setIsSubmitting(true);
 
+    const trimmedCustomerPhone = formData.customer_phone.trim();
+    const durationInSeconds = parseDurationToSeconds(formData.duration);
+
+    if (!trimmedCustomerPhone) {
+      setSubmitError("Customer phone is required.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (durationInSeconds <= 0) {
+      setSubmitError("Duration must be greater than 0 seconds.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    const requestPayload = {
+      eid: formData.eid.trim(),
+      status: formData.status,
+      timestamp: formData.timestamp ? new Date(formData.timestamp).toISOString() : "",
+      duration: formData.duration.trim(),
+      region: formData.region.trim(),
+      customer_phone: trimmedCustomerPhone,
+      employee_phone: formData.employee_phone.trim(),
+      transcript: formData.transcript.trim(),
+    };
+
+    let response;
+
     try {
-      const response = await axios.post(buildApiUrl("/api/ai/analyze-call"), {
-        cid: formData.cid.trim(),
-        eid: formData.eid.trim(),
-        status: formData.status,
-        timestamp: formData.timestamp ? new Date(formData.timestamp).toISOString() : "",
-        region: formData.region.trim(),
-        customer_phone: formData.customer_phone.trim(),
-        employee_phone: formData.employee_phone.trim(),
-        transcript: formData.transcript.trim(),
+      console.info("[GenerateAnalysis] submitting analysis request", {
+        cid: "auto",
+        eid: requestPayload.eid,
+      });
+      response = await axios.post(buildApiUrl("/api/ai/analyze-call"), requestPayload);
+    } catch (error) {
+      console.error("[GenerateAnalysis] submission failed", {
+        cid: error.response?.data?.data?.cid || error.response?.data?.call?.cid || "auto",
+        eid: requestPayload.eid,
+        message: error.message,
+        response: error.response?.data,
       });
 
-      setAnalysisResult(response.data.data);
-      setQuotaStatus(response.data.quota || quotaStatus);
-      setSubmitSuccess(
-        response.data.cached
-          ? `Analysis for ${formData.cid.trim()} already existed and has been loaded.`
-          : `AI analysis for ${formData.cid.trim()} has been generated and saved.`
-      );
-      setFormData(buildInitialFormData(user));
-    } catch (error) {
       if (error.response?.data?.quota) {
         setQuotaStatus(error.response.data.quota);
       }
 
+      if (error.response?.data?.call) {
+        notifyCallsUpdated({
+          cid: error.response.data.call.cid,
+          eid: error.response.data.call.eid,
+        });
+      }
+
       setSubmitError(
-        error.response?.data?.message || "Failed to generate AI analysis. Please review the form and try again."
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to generate AI analysis. Please review the form and try again."
+      );
+      setIsSubmitting(false);
+      return;
+    }
+
+    try {
+      const savedCallId = response.data?.data?.cid || response.data?.call?.cid || "";
+      console.info("[GenerateAnalysis] submission succeeded", response.data);
+      setAnalysisResult(response.data?.data || null);
+      setQuotaStatus(response.data?.quota || quotaStatus);
+      setLastSavedCallId(savedCallId);
+      notifyCallsUpdated({
+        cid: savedCallId,
+        eid: requestPayload.eid,
+      });
+      setSubmitSuccess(
+        response.data?.cached
+          ? `Analysis for ${savedCallId} already existed and has been loaded. The raw call record is synced to Call Logs.`
+          : `AI analysis for ${savedCallId} has been generated and saved. The raw call record is now available in Call Logs.`
+      );
+      setFormData(buildInitialFormData(user));
+    } catch (postSuccessError) {
+      console.error("[GenerateAnalysis] post-success UI update failed", {
+        cid: response.data?.data?.cid || response.data?.call?.cid || "unknown",
+        message: postSuccessError.message,
+        stack: postSuccessError.stack,
+      });
+
+      const savedCallId = response.data?.data?.cid || response.data?.call?.cid || "";
+      setAnalysisResult(response.data?.data || null);
+      setQuotaStatus(response.data?.quota || quotaStatus);
+      setLastSavedCallId(savedCallId);
+      setSubmitSuccess(
+        `AI analysis for ${savedCallId} was saved successfully, but the page hit a local UI update issue. Please reload the page if the latest result does not appear immediately.`
       );
     } finally {
       setIsSubmitting(false);
@@ -201,13 +273,14 @@ export function GenerateAnalysis() {
         <CardContent className="grid gap-6 p-6 lg:grid-cols-[1.05fr_0.95fr] lg:p-8">
           <div className="space-y-4">
             <Badge className="w-fit border-white/20 bg-white/10 text-white hover:bg-white/10">
-              Manager AI Workspace
+              AI Workspace
             </Badge>
             <div className="space-y-2">
               <h1 className="text-3xl font-semibold tracking-tight">Generate AI Analysis</h1>
               <p className="max-w-2xl text-sm text-white/75">
                 Enter a call transcript and its metadata here, generate the AI result through the backend, and keep the
-                existing analysis dashboard read-only and untouched.
+                existing analysis dashboard read-only and untouched. Employees and managers both submit using their
+                own signed-in IDs.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -217,13 +290,16 @@ export function GenerateAnalysis() {
               <Badge className="border-white/15 bg-white/10 text-white/90 hover:bg-white/10">
                 Backend-only Gemini key
               </Badge>
+              <Badge className="border-white/15 bg-white/10 text-white/90 hover:bg-white/10">
+                Signed-in EID only
+              </Badge>
             </div>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-3">
             <MetricCard label="Quota Used" value={quotaStatus.used} subtitle={`Out of ${quotaStatus.limit} total AI requests`} />
             <MetricCard label="Remaining" value={quotaStatus.remaining} subtitle="Requests left before the manual reset is needed" />
-            <MetricCard label="Access" value="Manager" subtitle="Only managers can submit new AI analysis requests" />
+            <MetricCard label="Access" value={roleLabel} subtitle="Employees and managers can submit with their own signed-in IDs" />
           </div>
         </CardContent>
       </Card>
@@ -268,16 +344,6 @@ export function GenerateAnalysis() {
             <form className="space-y-4" onSubmit={handleSubmit}>
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Call ID</label>
-                  <Input
-                    value={formData.cid}
-                    readOnly
-                    className="bg-slate-50 dark:bg-slate-900/70"
-                  />
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Generated automatically for each submission.</p>
-                </div>
-
-                <div className="space-y-2">
                   <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Employee</label>
                   <Input
                     value={`${user.name || user.employee_name || user.eid} (${user.eid})`}
@@ -314,6 +380,17 @@ export function GenerateAnalysis() {
                 </div>
 
                 <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Duration</label>
+                  <Input
+                    value={formData.duration}
+                    onChange={(event) => handleInputChange("duration", event.target.value)}
+                    placeholder="4m 20s"
+                    required
+                  />
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Use the same format shown in Call Logs, for example `4m 20s`. Zero-length calls are not allowed.</p>
+                </div>
+
+                <div className="space-y-2">
                   <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Region</label>
                   <Input
                     value={formData.region}
@@ -328,6 +405,7 @@ export function GenerateAnalysis() {
                     value={formData.customer_phone}
                     onChange={(event) => handleInputChange("customer_phone", event.target.value)}
                     placeholder="9876543210"
+                    required
                   />
                 </div>
 
@@ -335,9 +413,10 @@ export function GenerateAnalysis() {
                   <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Employee Phone</label>
                   <Input
                     value={formData.employee_phone}
-                    onChange={(event) => handleInputChange("employee_phone", event.target.value)}
-                    placeholder="Auto-filled from the signed-in session"
+                    readOnly
+                    className="bg-slate-50 dark:bg-slate-900/70"
                   />
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Taken from the current signed-in session.</p>
                 </div>
               </div>
 
@@ -359,7 +438,7 @@ export function GenerateAnalysis() {
 
                 <Button
                   type="submit"
-                  disabled={isSubmitting || quotaStatus.exhausted || !formData.cid.trim() || !formData.eid.trim() || !formData.transcript.trim()}
+                  disabled={isSubmitting || quotaStatus.exhausted || !formData.eid.trim() || !formData.transcript.trim()}
                   className="h-11 min-w-[220px] bg-slate-950 text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-950 dark:hover:bg-slate-200"
                 >
                   {isSubmitting ? "Generating..." : quotaStatus.exhausted ? "Usage Limit Reached" : "Generate and Save Analysis"}

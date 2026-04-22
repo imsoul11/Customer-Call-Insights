@@ -12,13 +12,13 @@ import {
 } from "chart.js";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { fetchBackendUsers } from "@/lib/backendData";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { buildApiUrl } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { useExport } from "@/context/ExportContext";
 import PageLoading from "../components/PageLoading";
-import { fetchUsers } from "../firebaseapi";
 import { Activity, BarChart3, Crown, Star, Trophy, Users } from "lucide-react";
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
@@ -90,7 +90,7 @@ export default function Leaderboard() {
       try {
         const [response, users] = await Promise.all([
           axios.get(buildApiUrl("/api/data/all")),
-          fetchUsers(),
+          fetchBackendUsers(),
         ]);
 
         if (response.data.success) {

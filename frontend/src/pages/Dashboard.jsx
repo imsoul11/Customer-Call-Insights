@@ -4,12 +4,12 @@ import { Bar, Pie } from "react-chartjs-2";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { fetchBackendUsers } from "@/lib/backendData";
 import { cn } from "@/lib/utils";
 import { buildApiUrl } from "@/lib/api";
 import { useAuth } from "../context/AuthContext";
 import { useExport } from "../context/ExportContext";
 import PageLoading from "../components/PageLoading";
-import { fetchUsers } from "../firebaseapi";
 import {
   Chart as ChartJS,
   ArcElement,
@@ -178,7 +178,7 @@ const Dashboard = () => {
       try {
         const [response, users] = await Promise.all([
           fetch(buildApiUrl("/api/data/all")),
-          fetchUsers(),
+          fetchBackendUsers(),
         ]);
 
         if (!response.ok) {
@@ -467,7 +467,7 @@ const Dashboard = () => {
                 {user.role === "employee" ? "Employee View" : "Manager View"}
               </Badge>
               <Badge className="border-white/15 bg-white/10 text-white/90 hover:bg-white/10">
-                Active selection: {activeSelectionLabel}
+                {activeSelectionLabel}
               </Badge>
               {user.role === "employee" && user.phone ? (
                 <Badge className="border-white/15 bg-white/10 text-white/90 hover:bg-white/10">
@@ -514,9 +514,7 @@ const Dashboard = () => {
                   </div>
                   <div>
                     <CardTitle className="text-lg">View Selection</CardTitle>
-                    <CardDescription>
-                      Switch between employee-level and overall performance summaries.
-                    </CardDescription>
+                    
                   </div>
                 </div>
               </CardHeader>
@@ -578,7 +576,7 @@ const Dashboard = () => {
                     </h3>
                     <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">
                       The dashboard summary and both charts update together so you can compare satisfaction quality,
-                      call volume, and sentiment mix without switching pages.
+                      call volume, and sentiment mix.
                     </p>
                   </div>
                 </div>

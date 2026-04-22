@@ -51,7 +51,7 @@ const App = () => {
                 <Route
                   path="dashboard/generate-analysis"
                   element={
-                    <ProtectedRoute allowedRoles={['manager']}>
+                    <ProtectedRoute allowedRoles={['manager', 'employee']}>
                       <GenerateAnalysis />
                     </ProtectedRoute>
                   }

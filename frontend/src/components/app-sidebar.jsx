@@ -35,7 +35,7 @@ const items = [
     title: "Generate AI",
     url: "/dashboard/generate-analysis",
     icon: Sparkles,
-    role: "manager",
+    role: "manager | employee",
   },
   {
     title: "Leaderboard",
