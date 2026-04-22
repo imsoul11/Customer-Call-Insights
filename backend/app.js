@@ -65,9 +65,16 @@ app.post('/send-welcome-email', async (req, res) => {
 mongoose.connect(`${process.env.MONGODB_CONNECTION_STRING}/${process.env.MONGODB_DATABASE_NAME}`, {
   useNewUrlParser: true,
   useUnifiedTopology: true
-}).then(() => console.log('database connected')).catch((e) => console.log(`database error: ${e}`));
+})
+  .then(() => {
+    // console.log('database connected');
+  })
+  .catch((e) => {
+    // console.log(`database error: ${e}`);
+    console.error(`database error: ${e}`);
+  });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}/`);
+  // console.log(`Server running at http://localhost:${PORT}/`);
 });

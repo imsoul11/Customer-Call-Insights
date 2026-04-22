@@ -7,7 +7,7 @@ export async function fetchCallRecords() {
   const callRecords = [];
   const querySnapshot = await getDocs(collection(db, "calls")); // Ensure this is your collection name
   if (querySnapshot) {
-    console.log(querySnapshot);
+    // console.log(querySnapshot);
     querySnapshot.forEach((doc) => {
       callRecords.push({ id: doc.id, ...doc.data() });
     });
@@ -59,7 +59,7 @@ export async function pushDummyData() {
   try {
     for (const record of dummyData2) {
       await addDoc(collectionRef, record);
-      console.log(`Added record with Call ID: ${record.cid}`);
+      // console.log(`Added record with Call ID: ${record.cid}`);
     }
   } catch (error) {
     console.error("Error adding document: ", error);
@@ -88,7 +88,7 @@ export async function updateUserRole(eid, newRole) {
     if (userDoc.exists()) {
       // If the document exists, update it directly
       await updateDoc(userRef, { role: newRole });
-      console.log(`Updated user role for ${eid} to ${newRole}`);
+      // console.log(`Updated user role for ${eid} to ${newRole}`);
     } else {
       // If no document with the eid as an ID exists, try finding it as a field
       const q = query(collection(db, "users"), where("eid", "==", eid));
@@ -98,7 +98,7 @@ export async function updateUserRole(eid, newRole) {
         // If a document is found, update the role
         querySnapshot.forEach(async (docSnapshot) => {
           await updateDoc(docSnapshot.ref, { role: newRole });
-          console.log(`Updated user role for ${eid} to ${newRole} (by field)`);
+          // console.log(`Updated user role for ${eid} to ${newRole} (by field)`);
         });
       } else {
         console.error(`No user found with eid: ${eid}`);
@@ -143,9 +143,9 @@ async function sendWelcomeEmail({ email, eid, password }) {
       }
     });
     
-    console.log(response)
+    // console.log(response)
    
-    console.log(response.data.message); // Should log "Welcome email sent!" if successful
+    // console.log(response.data.message); // Should log "Welcome email sent!" if successful
   } catch (error) {
     console.error('Error sending email:', error);
   }
@@ -174,7 +174,7 @@ export async function addUser({ employee_phone,employee_name, role,department, e
   try {
     // Add the new user to the Firestore "users" collection
     await addDoc(collectionRef, newUser);
-    console.log(`Added user with EID: ${eid} and password: ${password}`);
+    // console.log(`Added user with EID: ${eid} and password: ${password}`);
 
      // Send a welcome email
      await sendWelcomeEmail({ email, eid, password });
@@ -189,7 +189,7 @@ export async function deleteUser(eid) {
   try {
     const userRef = doc(db, "users", eid);
     await deleteDoc(userRef);
-    console.log(`Deleted user with EID: ${eid}`);
+    // console.log(`Deleted user with EID: ${eid}`);
   } catch (error) {
     console.error("Error deleting user: ", error);
     throw error; // Rethrow error to handle it in the calling function

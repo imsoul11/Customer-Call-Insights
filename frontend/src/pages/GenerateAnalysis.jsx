@@ -199,10 +199,10 @@ export function GenerateAnalysis() {
     let response;
 
     try {
-      console.info("[GenerateAnalysis] submitting analysis request", {
-        cid: "auto",
-        eid: requestPayload.eid,
-      });
+      // console.info("[GenerateAnalysis] submitting analysis request", {
+      //   cid: "auto",
+      //   eid: requestPayload.eid,
+      // });
       response = await axios.post(buildApiUrl("/api/ai/analyze-call"), requestPayload);
     } catch (error) {
       console.error("[GenerateAnalysis] submission failed", {
@@ -234,7 +234,7 @@ export function GenerateAnalysis() {
 
     try {
       const savedCallId = response.data?.data?.cid || response.data?.call?.cid || "";
-      console.info("[GenerateAnalysis] submission succeeded", response.data);
+      // console.info("[GenerateAnalysis] submission succeeded", response.data);
       setAnalysisResult(response.data?.data || null);
       setQuotaStatus(response.data?.quota || quotaStatus);
       setLastSavedCallId(savedCallId);
