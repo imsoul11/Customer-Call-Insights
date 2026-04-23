@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import axios from "axios";
 import { Badge } from "@/components/ui/badge";
@@ -106,7 +106,6 @@ export function GenerateAnalysis() {
   const [submitSuccess, setSubmitSuccess] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [analysisResult, setAnalysisResult] = useState(null);
-  const [lastSavedCallId, setLastSavedCallId] = useState("");
   const [formData, setFormData] = useState(() => buildInitialFormData(user));
   const canGenerateAnalysis = user?.role === "manager" || user?.role === "employee";
   const roleLabel = user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : "User";
@@ -237,7 +236,6 @@ export function GenerateAnalysis() {
       // console.info("[GenerateAnalysis] submission succeeded", response.data);
       setAnalysisResult(response.data?.data || null);
       setQuotaStatus(response.data?.quota || quotaStatus);
-      setLastSavedCallId(savedCallId);
       notifyCallsUpdated({
         cid: savedCallId,
         eid: requestPayload.eid,
@@ -258,7 +256,6 @@ export function GenerateAnalysis() {
       const savedCallId = response.data?.data?.cid || response.data?.call?.cid || "";
       setAnalysisResult(response.data?.data || null);
       setQuotaStatus(response.data?.quota || quotaStatus);
-      setLastSavedCallId(savedCallId);
       setSubmitSuccess(
         `AI analysis for ${savedCallId} was saved successfully, but the page hit a local UI update issue. Please reload the page if the latest result does not appear immediately.`
       );

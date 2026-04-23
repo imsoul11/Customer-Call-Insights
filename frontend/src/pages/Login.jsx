@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Navigate } from "react-router-dom";
 import { Activity, BarChart3, PhoneCall, ShieldCheck, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -14,7 +14,7 @@ const QUICK_LOGIN_ACCOUNTS = [
     name: "John J",
     department: "HR",
     email: "john.jones@work.com",
-    password: "ezK0zyAM",
+    password: "DemoEmployee2026!",
   },
   {
     roleLabel: "Manager",
@@ -22,18 +22,19 @@ const QUICK_LOGIN_ACCOUNTS = [
     name: "Emma J",
     department: "Finance",
     email: "emma.johnson@work.com",
-    password: "aVp1RJqz",
+    password: "DemoManager2026!",
   },
 ];
 
 const SIGNAL_BARS = [74, 52, 88, 61, 93, 67, 79];
+const ENABLE_QUICK_LOGIN = import.meta.env.DEV;
 
 const Login = () => {
   const { user, login, error, loading, isAuthenticated } = useAuth();
   const [eid, setEid] = useState("");
   const [password, setPassword] = useState("");
   const [formError, setFormError] = useState("");
-  const [showManualLogin, setShowManualLogin] = useState(false);
+  const [showManualLogin, setShowManualLogin] = useState(!ENABLE_QUICK_LOGIN);
   const [activeLoginTarget, setActiveLoginTarget] = useState(null);
 
   const handleLogin = async (event) => {
@@ -71,7 +72,7 @@ const Login = () => {
     return <Navigate to="/dashboard/usermanagement" replace />;
   }
 
-  if (isAuthenticated || (user?.role === "employee " || user?.role === "manager")) {
+  if (isAuthenticated || user?.role === "employee" || user?.role === "manager") {
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -195,64 +196,70 @@ const Login = () => {
             </CardHeader>
 
             <CardContent className="relative space-y-6">
-              <div className="grid gap-4 md:grid-cols-2">
-                {QUICK_LOGIN_ACCOUNTS.map((account) => (
-                  <div
-                    key={account.eid}
-                    className="group flex h-full flex-col rounded-[26px] border border-slate-200 bg-[linear-gradient(180deg,_rgba(255,255,255,0.95),_rgba(248,250,252,0.9)_100%)] p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_50px_rgba(15,23,42,0.08)] dark:border-slate-800 dark:bg-[linear-gradient(180deg,_rgba(15,23,42,0.85),_rgba(2,6,23,0.95)_100%)] dark:hover:shadow-none"
-                  >
-                    <div className="flex flex-1 flex-col justify-between gap-4">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0 flex-1">
-                          <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
-                            {account.roleLabel}
+              {ENABLE_QUICK_LOGIN && (
+                <div className="grid gap-4 md:grid-cols-2">
+                  {QUICK_LOGIN_ACCOUNTS.map((account) => (
+                    <div
+                      key={account.eid}
+                      className="group flex h-full flex-col rounded-[26px] border border-slate-200 bg-[linear-gradient(180deg,_rgba(255,255,255,0.95),_rgba(248,250,252,0.9)_100%)] p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_50px_rgba(15,23,42,0.08)] dark:border-slate-800 dark:bg-[linear-gradient(180deg,_rgba(15,23,42,0.85),_rgba(2,6,23,0.95)_100%)] dark:hover:shadow-none"
+                    >
+                      <div className="flex flex-1 flex-col justify-between gap-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0 flex-1">
+                            <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+                              {account.roleLabel}
+                            </div>
+                            <div className="mt-2 text-lg font-semibold leading-tight text-slate-900 dark:text-slate-100">
+                              {account.name}
+                            </div>
                           </div>
-                          <div className="mt-2 text-lg font-semibold leading-tight text-slate-900 dark:text-slate-100">
-                            {account.name}
+                        </div>
+
+                        <div className="min-h-[82px] rounded-2xl border border-slate-200/70 bg-slate-50/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+                          <div className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+                            Contact
+                          </div>
+                          <div className="mt-2 break-all text-sm leading-6 text-slate-600 dark:text-slate-300">
+                            {account.email}
                           </div>
                         </div>
-                      </div>
 
-                      <div className="min-h-[82px] rounded-2xl border border-slate-200/70 bg-slate-50/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
-                        <div className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
-                          Contact
-                        </div>
-                        <div className="mt-2 break-all text-sm leading-6 text-slate-600 dark:text-slate-300">
-                          {account.email}
-                        </div>
+                        <Button
+                          type="button"
+                          className="mt-1 w-full bg-slate-950 text-white hover:bg-slate-800 disabled:opacity-100 disabled:bg-slate-950 disabled:text-white dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200 dark:disabled:bg-white dark:disabled:text-slate-950"
+                          onClick={() => handleQuickLogin(account)}
+                          disabled={loading}
+                        >
+                          {loading && activeLoginTarget === account.eid
+                            ? "Logging in..."
+                            : `Login as ${account.roleLabel}`}
+                        </Button>
                       </div>
-
-                      <Button
-                        type="button"
-                        className="mt-1 w-full bg-slate-950 text-white hover:bg-slate-800 disabled:opacity-100 disabled:bg-slate-950 disabled:text-white dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200 dark:disabled:bg-white dark:disabled:text-slate-950"
-                        onClick={() => handleQuickLogin(account)}
-                        disabled={loading}
-                      >
-                        {loading && activeLoginTarget === account.eid
-                          ? "Logging in..."
-                          : `Login as ${account.roleLabel}`}
-                      </Button>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
 
               <div className="space-y-4 rounded-[26px] border border-dashed border-slate-200 bg-slate-50/60 p-4 dark:border-slate-800 dark:bg-slate-900/35">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <div className="text-sm font-medium text-slate-900 dark:text-slate-100">Manual login</div>
                     <div className="text-sm text-slate-500 dark:text-slate-400">
-                      Hidden by default to keep the quick-access view clean.
+                      {ENABLE_QUICK_LOGIN
+                        ? "Hidden by default to keep the quick-access view clean."
+                        : "Use your assigned employee credentials to access the workspace."}
                     </div>
                   </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setShowManualLogin((visible) => !visible)}
-                    disabled={loading}
-                  >
-                    {showManualLogin ? "Hide Manual Login" : "Show Manual Login"}
-                  </Button>
+                  {ENABLE_QUICK_LOGIN && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setShowManualLogin((visible) => !visible)}
+                      disabled={loading}
+                    >
+                      {showManualLogin ? "Hide Manual Login" : "Show Manual Login"}
+                    </Button>
+                  )}
                 </div>
 
                 {showManualLogin && (

@@ -135,6 +135,16 @@ async function upsertRawCall(callPayload) {
 
 async function analyzeCall(req, res) {
   const callPayload = buildCallPayload(req.body);
+  const authenticatedUser = req.authUser;
+
+  if (authenticatedUser?.eid) {
+    callPayload.eid = authenticatedUser.eid;
+  }
+
+  if (authenticatedUser?.employee_phone || authenticatedUser?.phone) {
+    callPayload.employee_phone = authenticatedUser.employee_phone || authenticatedUser.phone;
+  }
+
   const validationErrors = validateCallPayload(callPayload);
 
   if (validationErrors.length > 0) {
@@ -255,22 +265,6 @@ async function quotaStatus(req, res) {
 }
 
 async function resetQuota(req, res) {
-  const adminResetKey = process.env.AI_ADMIN_RESET_KEY;
-
-  if (!adminResetKey) {
-    return res.status(503).json({
-      success: false,
-      message: 'AI quota reset is not configured on the backend.',
-    });
-  }
-
-  if (req.headers['x-admin-reset-key'] !== adminResetKey) {
-    return res.status(403).json({
-      success: false,
-      message: 'Invalid admin reset key.',
-    });
-  }
-
   try {
     return res.json({
       success: true,

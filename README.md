@@ -88,7 +88,6 @@ The User Management page is the admin workspace for managing people in the syste
 - adding users
 - updating roles
 - deleting users
-- migrating user and call datasets into MongoDB
 
 ## AI Analysis Flow
 
@@ -128,8 +127,6 @@ The backend is built with Express and Mongoose. It provides APIs for:
 - call retrieval
 - user retrieval
 - AI data retrieval
-- data migration
-- welcome email sending
 
 ### Database
 
@@ -147,7 +144,6 @@ MongoDB stores the main application data in collections such as:
 - Backend: Node.js, Express
 - Database: MongoDB with Mongoose
 - AI: Gemini API
-- Additional integration: Firebase configuration for supporting flows
 - Deployment: Vercel
 
 ## Project Structure
@@ -199,30 +195,14 @@ MONGODB_CONNECTION_STRING=your_mongodb_connection_string
 MONGODB_DATABASE_NAME=your_database_name
 
 GEMINI_API_KEY=your_gemini_api_key
+AUTH_SESSION_SECRET=your_long_random_session_secret
 AI_ADMIN_RESET_KEY=your_admin_reset_key
-AI_SITE_LIMIT=30
+AI_SITE_LIMIT=100
 GEMINI_API_MODEL=gemini-2.5-flash-lite
 GEMINI_TIMEOUT_MS=20000
 AI_IP_WINDOW_MS=600000
 AI_IP_MAX_REQUESTS=5
 AI_MAX_TRANSCRIPT_CHARS=12000
-
-MAIL_USER=your_email
-MAIL_PASS=your_email_app_password
-```
-
-### Frontend Environment Variables
-
-Create `frontend/.env`:
-
-```env
-VITE_API_KEY=your_firebase_api_key
-VITE_AUTH_DOMAIN=your_firebase_auth_domain
-VITE_PROJECT_ID=your_firebase_project_id
-VITE_STORAGE_BUCKET=your_firebase_storage_bucket
-VITE_MESSAGING_SENDER_ID=your_firebase_messaging_sender_id
-VITE_APP_ID=your_firebase_app_id
-VITE_MEASUREMENT_ID=your_firebase_measurement_id
 ```
 
 ## Installation
@@ -291,9 +271,6 @@ npm start
 ### Data Routes
 
 - `GET /api/data/all`
-- `GET /api/data/eid?eid=EID12345`
-- `DELETE /api/data/deleteAll`
-- `POST /api/data/insertBulk`
 
 ### Call Routes
 
@@ -302,14 +279,6 @@ npm start
 ### User Routes
 
 - `GET /api/users`
-
-### Migration Route
-
-- `POST /api/migration/firebase`
-
-### Email Route
-
-- `POST /send-welcome-email`
 
 ## Example AI Request
 
@@ -342,6 +311,7 @@ Recommended backend variables for deployment:
 - `MONGODB_CONNECTION_STRING`
 - `MONGODB_DATABASE_NAME`
 - `FRONTEND_URL`
+- `AUTH_SESSION_SECRET`
 - `GEMINI_API_KEY`
 - `AI_ADMIN_RESET_KEY`
 - `AI_SITE_LIMIT`
@@ -350,10 +320,6 @@ Recommended backend variables for deployment:
 - `AI_IP_WINDOW_MS`
 - `AI_IP_MAX_REQUESTS`
 - `AI_MAX_TRANSCRIPT_CHARS`
-- `MAIL_USER`
-- `MAIL_PASS`
-
-Add the Firebase `VITE_*` variables as well if your deployment uses the Firebase-supported flows.
 
 ## Summary
 

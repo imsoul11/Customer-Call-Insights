@@ -1,7 +1,10 @@
-import React, { createContext, useState, useContext, useEffect } from "react";
+import { createContext, useState, useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Cookies from "js-cookie"; // Import js-cookie
-import { fetchBackendUsers } from "../lib/backendData";
+import {
+    fetchBackendSession,
+    loginWithBackend,
+    logoutBackendSession,
+} from "../lib/backendData";
 
 
 const AuthContext = createContext();
@@ -31,25 +34,14 @@ export const AuthProvider = ({ children }) => {
         setLoading(true);
         setError('');
         try {
-            const users = await fetchBackendUsers();
-            const normalizedEid = eid.trim();
-            const userData = users.find((entry) => entry.eid === normalizedEid);
-
-            if (userData) {
-                if (userData.password === password) {
-                    setUser(buildSessionUser(userData));
-                    setIsAuthenticated(true);
-                    
-                    Cookies.set('userEid', `${userData.eid}-${userData.password}`, { expires: 7 }); // Cookie expires in 7 days
-                } else {
-                    setError('Incorrect password');
-                }
-            } else {
-                setError('EID not found');
-            }
+            const userData = await loginWithBackend(eid.trim(), password);
+            setUser(buildSessionUser(userData));
+            setIsAuthenticated(true);
         } catch (err) {
             console.error('Error during login:', err.message);
-            setError('Error during login: ' + err.message);
+            setUser(null);
+            setIsAuthenticated(false);
+            setError(err.response?.data?.message || err.message || 'Error during login.');
         } finally {
             setLoading(false);
         }
@@ -58,8 +50,14 @@ export const AuthProvider = ({ children }) => {
     // Function to handle logout
     const logout = async () => {
         setLoading(true);
-        handleLogout();
-        setLoading(false);
+        try {
+            await logoutBackendSession();
+        } catch (err) {
+            console.error('Error during logout:', err.message);
+        } finally {
+            handleLogout();
+            setLoading(false);
+        }
     };
 
     // Check if the user is authenticated on initial load
@@ -67,35 +65,16 @@ export const AuthProvider = ({ children }) => {
         const restoreSession = async () => {
             setLoading(true); // Set loading while checking auth state
 
-            const userEidCookie = Cookies.get("userEid");
-
-            if (userEidCookie) {
-                const separatorIndex = userEidCookie.indexOf("-");
-                const eid = separatorIndex === -1 ? userEidCookie : userEidCookie.slice(0, separatorIndex);
-                const password = separatorIndex === -1 ? "" : userEidCookie.slice(separatorIndex + 1);
-
-                try {
-                    const users = await fetchBackendUsers();
-                    const userData = users.find((entry) => entry.eid === eid);
-
-                    if (userData) {
-                        if (userData.password === password) {
-                            setUser(buildSessionUser(userData));
-                            setIsAuthenticated(true);
-                        } else {
-                            console.warn("Password mismatch for EID:", eid);
-                            handleLogout();
-                        }
-                    } else {
-                        console.warn("User document not found for EID:", eid);
-                        handleLogout(); // Log out if EID not found in the DB
-                    }
-                } catch (error) {
-                    console.error("Error fetching user data:", error.message);
-                    setError(`Error fetching user data: ${error.message}`);
-                    handleLogout(); // Log out in case of error
+            try {
+                const userData = await fetchBackendSession();
+                setUser(buildSessionUser(userData));
+                setIsAuthenticated(true);
+            } catch (error) {
+                if (error.response?.status && error.response.status !== 401) {
+                    console.error("Error fetching session data:", error.message);
+                    setError(`Error fetching session data: ${error.message}`);
                 }
-            } else {
+
                 setUser(null);
                 setIsAuthenticated(false);
                 navigate("/login");
@@ -109,7 +88,6 @@ export const AuthProvider = ({ children }) => {
 
     // Handle logout, remove cookies and redirect to login
     const handleLogout = () => {
-        Cookies.remove("userEid"); // Remove the user cookie
         setUser(null);
         setIsAuthenticated(false);
         navigate("/login"); // Redirect to login page

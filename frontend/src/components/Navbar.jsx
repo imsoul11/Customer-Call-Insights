@@ -1,4 +1,3 @@
-import React from 'react';
 import ThemeToggle from './Themetoggle'; // Adjust the path as needed
 import { Button } from "@/components/ui/button"; // Adjust the path as needed
 import { useAuth } from "@/context/AuthContext"; // Assuming you have an Auth context
@@ -29,7 +28,7 @@ const downloadCSV = ({ headers, rows, filename }) => {
   URL.revokeObjectURL(url);
 };
 
-const Navbar = ({ component, pageData }) => {
+const Navbar = ({ component }) => {
   const { logout } = useAuth(); // Get the logout function from the Auth context
   const { exportConfig } = useExport();
   const navigate = useNavigate(); // Hook to programmatically navigate

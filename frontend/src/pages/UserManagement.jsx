@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -7,24 +7,27 @@ import { useAuth } from "../context/AuthContext"; // Import Auth context
 import { useExport } from "../context/ExportContext";
 import { Navigate } from "react-router-dom";
 import PageLoading from "../components/PageLoading";
-import { fetchUsers, updateUserRole, deleteUser, addUser, migrateFirebaseDataToMongo } from "../firebaseapi"; // Import Firebase functions
+import {
+  createBackendUser,
+  deleteBackendUser,
+  fetchBackendUsers,
+  updateBackendUserRole,
+} from "../lib/backendData";
 
 const UserManagement = () => {
-  const { user, logout, isAuthenticated, loading } = useAuth();
+  const { user, isAuthenticated, loading } = useAuth();
   const { setExportConfig } = useExport();
   const [users, setUsers] = useState([]); // State to hold the users
   const [error, setError] = useState(null); // State for error handling
   const [newUserData, setNewUserData] = useState({employee_name:"", employee_phone: "", email: "", role: "employee", department: "" }); // New user form state
   const [successMessage, setSuccessMessage] = useState(null); // State to show success message
   const [pageLoading, setPageLoading] = useState(true);
-  const [migrationLoading, setMigrationLoading] = useState(false);
 
   useEffect(() => {
-    // Fetch users from Firebase when component mounts
     async function fetchUserData() {
       try {
-        const usersData = await fetchUsers(); // Fetch all users
-        setUsers(usersData); // Store in state
+        const usersData = await fetchBackendUsers();
+        setUsers(usersData);
       } catch (err) {
         setError("Error fetching users.");
         console.error(err);
@@ -38,23 +41,32 @@ const UserManagement = () => {
   // Function to handle role change
   const handleRoleChange = async (eid, newRole) => {
     try {
-      await updateUserRole(eid, newRole); // Update the user role in Firebase
-      setUsers(users.map(user => user.eid === eid ? { ...user, role: newRole } : user)); // Update UI state
+      const updatedUser = await updateBackendUserRole(eid, newRole);
+      setUsers(users.map((entry) => entry.eid === eid ? updatedUser : entry));
+      setSuccessMessage(`Role updated for ${eid}.`);
     } catch (err) {
-      setError("Failed to update role.");
+      setError(err.response?.data?.message || err.message || "Failed to update role.");
       console.error(err);
     }
   };
 
   // Function to handle adding a new user
   const handleAddUser = async () => {
+    if (!newUserData.employee_name || !newUserData.email) {
+      setError("Employee name and email are required.");
+      return;
+    }
+
     try {
-      const { eid, password } = await addUser(newUserData); // Call addUser from firebaseapi
-      setUsers([...users, { eid, ...newUserData }]); // Update UI with the new user
-      setSuccessMessage(`User added with EID: ${eid} and password: ${password}`); // Show success message
-      setNewUserData({ employee_name:"",employee_phone: "", email: "", role: "employee", department: "" }); // Reset form
+      setError(null);
+      const { user: createdUser, credentials } = await createBackendUser(newUserData);
+      setUsers((previousUsers) => [...previousUsers, createdUser]);
+      setSuccessMessage(
+        `User added with EID: ${credentials?.eid || createdUser.eid} and password: ${credentials?.password || "generated"}.`
+      );
+      setNewUserData({ employee_name:"",employee_phone: "", email: "", role: "employee", department: "" });
     } catch (err) {
-      setError("Error adding user.");
+      setError(err.response?.data?.message || err.message || "Error adding user.");
       console.error(err);
     }
   };
@@ -62,31 +74,13 @@ const UserManagement = () => {
   // Function to handle deleting a user
   const handleDeleteUser = async (eid) => {
     try {
-      await deleteUser(eid); // Call deleteUser from firebaseapi
-      setUsers(users.filter(user => user.eid !== eid)); // Update UI state
-      setSuccessMessage(`User with EID: ${eid} has been deleted.`); // Show success message
+      setError(null);
+      await deleteBackendUser(eid);
+      setUsers(users.filter(user => user.eid !== eid));
+      setSuccessMessage(`User with EID: ${eid} has been deleted.`);
     } catch (err) {
-      setError("Error deleting user.");
+      setError(err.response?.data?.message || err.message || "Error deleting user.");
       console.error(err);
-    }
-  };
-
-  const handleMongoMigration = async () => {
-    setMigrationLoading(true);
-    setError(null);
-
-    try {
-      const response = await migrateFirebaseDataToMongo();
-      const migrationSummary = response?.data;
-
-      setSuccessMessage(
-        `Firebase data migrated to Mongo. Users imported: ${migrationSummary?.users_imported || 0}, calls imported: ${migrationSummary?.calls_imported || 0}.`
-      );
-    } catch (err) {
-      setError("Error migrating Firebase data to MongoDB.");
-      console.error(err);
-    } finally {
-      setMigrationLoading(false);
     }
   };
 
@@ -169,21 +163,6 @@ const UserManagement = () => {
           <Button onClick={handleAddUser} className="w-full mt-4">Add User</Button>
         </div>
       </div>
-      {user.role === "admin" && (
-        <div className="mt-8">
-          <h3 className="text-lg font-semibold mb-4">MongoDB Migration</h3>
-          <Card className="mb-6">
-            <CardContent className="pt-6">
-              <p className="text-sm text-slate-600 mb-4">
-                Copy all current Firebase `users` and `calls` records into MongoDB so we can switch the app over collection by collection later.
-              </p>
-              <Button onClick={handleMongoMigration} disabled={migrationLoading}>
-                {migrationLoading ? "Migrating..." : "Migrate Firebase Data to Mongo"}
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      )}
       {user.role === "admin" && (
         <div className="user-list">
           <h3 className="text-lg font-semibold mb-4">Manage Users</h3>

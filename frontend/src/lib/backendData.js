@@ -193,3 +193,71 @@ export async function fetchBackendUsers() {
 export async function fetchBackendCallRecords() {
   return fetchCollection("/api/calls", normalizeCallRecord);
 }
+
+export async function createBackendUser(userPayload) {
+  const response = await axios.post(buildApiUrl("/api/users"), userPayload);
+
+  if (!response.data?.success) {
+    throw new Error(response.data?.message || "Failed to create user.");
+  }
+
+  return {
+    user: normalizeUserRecord(response.data.data || {}),
+    credentials: response.data.credentials || null,
+  };
+}
+
+export async function updateBackendUserRole(eid, role) {
+  const response = await axios.patch(buildApiUrl(`/api/users/${encodeURIComponent(eid)}/role`), {
+    role,
+  });
+
+  if (!response.data?.success) {
+    throw new Error(response.data?.message || "Failed to update user role.");
+  }
+
+  return normalizeUserRecord(response.data.data || {});
+}
+
+export async function deleteBackendUser(eid) {
+  const response = await axios.delete(buildApiUrl(`/api/users/${encodeURIComponent(eid)}`));
+
+  if (!response.data?.success) {
+    throw new Error(response.data?.message || "Failed to delete user.");
+  }
+
+  return true;
+}
+
+export async function loginWithBackend(eid, password) {
+  const response = await axios.post(buildApiUrl("/api/auth/login"), {
+    eid,
+    password,
+  });
+
+  if (!response.data?.success) {
+    throw new Error(response.data?.message || "Login failed.");
+  }
+
+  return normalizeUserRecord(response.data.data || {});
+}
+
+export async function fetchBackendSession() {
+  const response = await axios.get(buildApiUrl("/api/auth/session"));
+
+  if (!response.data?.success) {
+    throw new Error(response.data?.message || "Failed to restore session.");
+  }
+
+  return normalizeUserRecord(response.data.data || {});
+}
+
+export async function logoutBackendSession() {
+  const response = await axios.post(buildApiUrl("/api/auth/logout"));
+
+  if (!response.data?.success) {
+    throw new Error(response.data?.message || "Logout failed.");
+  }
+
+  return true;
+}

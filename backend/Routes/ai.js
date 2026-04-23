@@ -1,6 +1,7 @@
 const express = require('express');
 const { analyzeCall, quotaStatus, resetQuota } = require('../Controller/aiController');
 const { createIpThrottle } = require('../middleware/ipThrottle');
+const { requireRole } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -14,8 +15,8 @@ const analyzeCallThrottle = createIpThrottle({
   maxRequests: parsePositiveInteger(process.env.AI_IP_MAX_REQUESTS, 5),
 });
 
-router.post('/analyze-call', analyzeCallThrottle, analyzeCall);
-router.get('/quota-status', quotaStatus);
-router.post('/quota-reset', resetQuota);
+router.post('/analyze-call', requireRole('employee', 'manager', 'admin'), analyzeCallThrottle, analyzeCall);
+router.get('/quota-status', requireRole('employee', 'manager', 'admin'), quotaStatus);
+router.post('/quota-reset', requireRole('admin'), resetQuota);
 
 module.exports = router;

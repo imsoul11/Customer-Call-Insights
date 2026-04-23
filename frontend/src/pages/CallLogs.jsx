@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Navigate } from "react-router-dom";
 import {
   Table,
@@ -176,7 +176,6 @@ export function CallLogs() {
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedRegion, setSelectedRegion] = useState("All");
   const [selectedStatus, setSelectedStatus] = useState("All");
-  const [selectedDepartment, setSelectedDepartment] = useState("All");
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [employeeDirectory, setEmployeeDirectory] = useState({});
@@ -269,21 +268,19 @@ export function CallLogs() {
           const matchesDate = selectedDate ? logDate === selectedDate : true;
           const matchesRegion = selectedRegion === "All" ? true : log.region === selectedRegion;
           const matchesStatus = selectedStatus === "All" ? true : log.status === selectedStatus;
-          const matchesDepartment = selectedDepartment === "All" ? true : log.department === selectedDepartment;
 
           if (isEmployee) {
             return log.eid === user.eid && matchesDate && matchesRegion && matchesStatus;
           }
 
           const matchesEid = selectedEid === "E" ? true : log.eid === selectedEid;
-          return matchesEid && matchesDate && matchesRegion && matchesStatus && matchesDepartment;
+          return matchesEid && matchesDate && matchesRegion && matchesStatus;
         })
       : []
   ), [
     callLogs,
     isEmployee,
     selectedDate,
-    selectedDepartment,
     selectedEid,
     selectedRegion,
     selectedStatus,
@@ -293,8 +290,6 @@ export function CallLogs() {
   const uniqueEids = [...new Set(callLogs.map((log) => log.eid).filter(Boolean))].sort();
   const uniqueRegions = [...new Set(callLogs.map((log) => log.region).filter(Boolean))].sort();
   const uniqueStatuses = [...new Set(callLogs.map((log) => log.status).filter(Boolean))].sort();
-  const uniqueDepartments = [...new Set(callLogs.map((log) => log.department).filter(Boolean))].sort();
-
   const visibleEmployeeCount = new Set(filteredLogs.map((log) => log.eid)).size;
   const visibleRegionCount = new Set(filteredLogs.map((log) => log.region)).size;
   const totalDurationMinutes = filteredLogs.reduce((total, log) => total + parseDuration(log.duration), 0);
@@ -353,7 +348,7 @@ export function CallLogs() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedEid, selectedDate, selectedRegion, selectedStatus, selectedDepartment, user?.eid, user?.role]);
+  }, [selectedEid, selectedDate, selectedRegion, selectedStatus, user?.eid, user?.role]);
 
   useEffect(() => {
     if (currentPage > totalPages) {
@@ -395,7 +390,6 @@ export function CallLogs() {
     isEmployee,
     paginatedLogs,
     selectedDate,
-    selectedDepartment,
     selectedEid,
     selectedRegion,
     selectedStatus,
