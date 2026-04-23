@@ -1,14 +1,14 @@
 import { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import { CallLogs } from './pages/CallLogs';
 import Dashboard from './pages/Dashboard';
 import { CallAnalysis } from './pages/CallAnalysis';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { useAuth } from './context/AuthContext';
 import { ExportContext } from './context/ExportContext';
 import Login from './pages/Login';
 import Leaderboard from './pages/Leaderboard';
-import UserManagement from './pages/UserManagement'; // Assuming this page exists
+import UserManagement from './pages/UserManagement';
 import GenerateAnalysis from './pages/GenerateAnalysis';
 
 const ProtectedRoute = ({ allowedRoles, children }) => {
