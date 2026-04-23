@@ -27,9 +27,9 @@ import PageLoading from "../components/PageLoading";
 import { FileText, ShieldAlert, ShieldCheck, Sparkles, Star } from "lucide-react";
 
 const defaultQuotaStatus = {
-  limit: 30,
+  limit: 100,
   used: 0,
-  remaining: 30,
+  remaining: 100,
   exhausted: false,
 };
 

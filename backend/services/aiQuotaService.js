@@ -1,7 +1,7 @@
 const AiQuota = require('../Models/aiQuota');
 
 const QUOTA_KEY = 'site_ai_quota';
-const DEFAULT_SITE_LIMIT = 30;
+const DEFAULT_SITE_LIMIT = 100;
 
 function getConfiguredLimit() {
   const parsedLimit = Number(process.env.AI_SITE_LIMIT);
