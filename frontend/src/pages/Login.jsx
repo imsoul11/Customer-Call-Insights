@@ -27,7 +27,8 @@ const QUICK_LOGIN_ACCOUNTS = [
 ];
 
 const SIGNAL_BARS = [74, 52, 88, 61, 93, 67, 79];
-const ENABLE_QUICK_LOGIN = import.meta.env.DEV;
+const ENABLE_QUICK_LOGIN =
+  import.meta.env.DEV || import.meta.env.VITE_ENABLE_QUICK_LOGIN === "true";
 
 const Login = () => {
   const { user, login, error, loading, isAuthenticated } = useAuth();
