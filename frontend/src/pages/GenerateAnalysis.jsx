@@ -37,13 +37,11 @@ const statusOptions = ["incoming", "outgoing", "missed", "escalated"];
 
 function buildInitialFormData(user) {
   return {
-    eid: user?.eid || "",
     status: "incoming",
     timestamp: new Date().toISOString().slice(0, 16),
     duration: "",
     region: "",
     customer_phone: "",
-    employee_phone: user?.phone || user?.employee_phone || "",
     transcript: "",
   };
 }
@@ -139,8 +137,6 @@ export function GenerateAnalysis() {
 
     setFormData((previous) => ({
       ...previous,
-      eid: user.eid || "",
-      employee_phone: previous.employee_phone || user.phone || user.employee_phone || "",
     }));
   }, [user]);
 
@@ -185,13 +181,13 @@ export function GenerateAnalysis() {
     }
 
     const requestPayload = {
-      eid: formData.eid.trim(),
+      eid: user.eid || "",
       status: formData.status,
       timestamp: formData.timestamp ? new Date(formData.timestamp).toISOString() : "",
       duration: formData.duration.trim(),
       region: formData.region.trim(),
       customer_phone: trimmedCustomerPhone,
-      employee_phone: formData.employee_phone.trim(),
+      employee_phone: user.phone || user.employee_phone || "",
       transcript: formData.transcript.trim(),
     };
 
@@ -409,7 +405,7 @@ export function GenerateAnalysis() {
                 <div className="space-y-2 md:col-span-2">
                   <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Employee Phone</label>
                   <Input
-                    value={formData.employee_phone}
+                    value={user.phone || user.employee_phone || ""}
                     readOnly
                     className="bg-slate-50 dark:bg-slate-900/70"
                   />
@@ -435,7 +431,7 @@ export function GenerateAnalysis() {
 
                 <Button
                   type="submit"
-                  disabled={isSubmitting || quotaStatus.exhausted || !formData.eid.trim() || !formData.transcript.trim()}
+                  disabled={isSubmitting || quotaStatus.exhausted || !formData.transcript.trim()}
                   className="h-11 min-w-[220px] bg-slate-950 text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-950 dark:hover:bg-slate-200"
                 >
                   {isSubmitting ? "Generating..." : quotaStatus.exhausted ? "Usage Limit Reached" : "Generate and Save Analysis"}
