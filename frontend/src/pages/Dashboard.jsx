@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
+import axios from "axios";
 import { Bar, Pie } from "react-chartjs-2";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -177,11 +178,11 @@ const Dashboard = () => {
     const fetchData = async () => {
       try {
         const [response, users] = await Promise.all([
-          fetch(buildApiUrl("/api/data/all")),
+          axios.get(buildApiUrl("/api/data/all")),
           fetchBackendUsers(),
         ]);
 
-        if (!response.ok) {
+        if (!response.data?.success) {
           throw new Error("Failed to fetch data");
         }
 
@@ -198,8 +199,7 @@ const Dashboard = () => {
           return accumulator;
         }, {});
 
-        const data = await response.json();
-        const processedData = processAIdata(data.data).map((entry) => ({
+        const processedData = processAIdata(response.data.data || []).map((entry) => ({
           ...entry,
           ...directory[entry.eid],
           displayName: directory[entry.eid]?.name || directory[entry.eid]?.employee_name || entry.eid,
