@@ -1,4 +1,5 @@
 import { PhoneCall, Calendar, LayoutDashboard, ListFilter, Search, Settings, Sparkles } from "lucide-react";
+import { NavLink } from "react-router-dom";
 import {
   Sidebar,
   SidebarContent,
@@ -76,10 +77,10 @@ export function AppSidebar() {
                 .map(item => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
-                      <a href={item.url}>
+                      <NavLink to={item.url}>
                         <item.icon />
                         <span>{item.title}</span>
-                      </a>
+                      </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
