@@ -3,7 +3,7 @@ const AiQuota = require('../Models/aiQuota');
 const QUOTA_KEY = 'site_ai_quota';
 const DEFAULT_SITE_LIMIT = 100;
 
-function getConfiguredLimit() {
+function getInitialQuotaLimit() {
   const parsedLimit = Number(process.env.AI_SITE_LIMIT);
   return Number.isFinite(parsedLimit) && parsedLimit > 0
     ? Math.floor(parsedLimit)
@@ -11,17 +11,15 @@ function getConfiguredLimit() {
 }
 
 async function ensureQuotaDocument() {
-  const limit = getConfiguredLimit();
+  const initialLimit = getInitialQuotaLimit();
 
   return AiQuota.findOneAndUpdate(
     { key: QUOTA_KEY },
     {
       $setOnInsert: {
         key: QUOTA_KEY,
+        limit: initialLimit,
         used_count: 0,
-      },
-      $set: {
-        limit,
         reset_mode: 'manual',
       },
     },
@@ -34,7 +32,7 @@ async function ensureQuotaDocument() {
 }
 
 function formatQuotaStatus(quotaDocument) {
-  const limit = getConfiguredLimit();
+  const limit = Math.max(0, Number(quotaDocument?.limit || getInitialQuotaLimit()));
   const used = Math.max(0, Math.min(Number(quotaDocument?.used_count || 0), limit));
   const remaining = Math.max(0, limit - used);
 
@@ -50,24 +48,21 @@ function formatQuotaStatus(quotaDocument) {
 }
 
 async function getQuotaStatus() {
-  const quotaDocument = await AiQuota.findOne({ key: QUOTA_KEY }).lean();
+  const quotaDocument = await ensureQuotaDocument();
   return formatQuotaStatus(quotaDocument);
 }
 
 async function reserveQuotaSlot() {
   await ensureQuotaDocument();
 
-  const limit = getConfiguredLimit();
   const reservedDocument = await AiQuota.findOneAndUpdate(
     {
       key: QUOTA_KEY,
-      used_count: { $lt: limit },
+      $expr: { $lt: ['$used_count', '$limit'] },
     },
     {
       $inc: { used_count: 1 },
       $set: {
-        limit,
-        reset_mode: 'manual',
         updated_at: new Date(),
       },
     },
@@ -102,22 +97,18 @@ async function refundQuotaSlot() {
 }
 
 async function resetQuotaUsage() {
-  const limit = getConfiguredLimit();
+  await ensureQuotaDocument();
 
   const resetDocument = await AiQuota.findOneAndUpdate(
     { key: QUOTA_KEY },
     {
       $set: {
-        limit,
         used_count: 0,
-        reset_mode: 'manual',
         updated_at: new Date(),
       },
     },
     {
-      upsert: true,
       new: true,
-      setDefaultsOnInsert: true,
     }
   ).lean();
 

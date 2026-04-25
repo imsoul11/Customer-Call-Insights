@@ -136,13 +136,35 @@ async function upsertRawCall(callPayload) {
 async function analyzeCall(req, res) {
   const callPayload = buildCallPayload(req.body);
   const authenticatedUser = req.authUser;
+  const authenticatedEid = getTrimmedField(authenticatedUser?.eid);
+  const authenticatedEmployeePhone = getTrimmedField(
+    authenticatedUser?.employee_phone || authenticatedUser?.phone
+  );
 
-  if (authenticatedUser?.eid) {
-    callPayload.eid = authenticatedUser.eid;
+  if (callPayload.eid && authenticatedEid && callPayload.eid !== authenticatedEid) {
+    return res.status(403).json({
+      success: false,
+      message: 'You cannot submit analysis for another employee.',
+    });
   }
 
-  if (authenticatedUser?.employee_phone || authenticatedUser?.phone) {
-    callPayload.employee_phone = authenticatedUser.employee_phone || authenticatedUser.phone;
+  if (
+    callPayload.employee_phone &&
+    authenticatedEmployeePhone &&
+    callPayload.employee_phone !== authenticatedEmployeePhone
+  ) {
+    return res.status(403).json({
+      success: false,
+      message: 'Employee phone does not match the authenticated user.',
+    });
+  }
+
+  if (authenticatedEid) {
+    callPayload.eid = authenticatedEid;
+  }
+
+  if (authenticatedEmployeePhone) {
+    callPayload.employee_phone = authenticatedEmployeePhone;
   }
 
   const validationErrors = validateCallPayload(callPayload);
