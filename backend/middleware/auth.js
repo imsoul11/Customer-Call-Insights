@@ -49,12 +49,8 @@ async function requireAuth(req, res, next) {
 }
 
 function requireRole(...allowedRoles) {
-  const normalizedRoles = allowedRoles
-    .map((role) => String(role || '').trim().toLowerCase())
-    .filter(Boolean);
-
   return (req, res, next) => {
-    const currentRole = String(req.authUser?.role || '').trim().toLowerCase();
+    const currentRole = req.authUser?.role;
 
     if (!currentRole) {
       return res.status(401).json({
@@ -63,7 +59,7 @@ function requireRole(...allowedRoles) {
       });
     }
 
-    if (!normalizedRoles.includes(currentRole)) {
+    if (!allowedRoles.includes(currentRole)) {
       return res.status(403).json({
         success: false,
         message: 'You do not have access to this resource.',
