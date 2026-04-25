@@ -26,19 +26,7 @@ function generateUniqueEidCandidate() {
   return `EID${Math.floor(10000 + Math.random() * 90000)}`;
 }
 
-async function ensureUniqueEid(existingEid) {
-  const normalizedEid = normalizeString(existingEid);
-
-  if (normalizedEid) {
-    const existingUser = await User.exists({ eid: normalizedEid });
-
-    if (existingUser) {
-      throw new Error('A user with that EID already exists.');
-    }
-
-    return normalizedEid;
-  }
-
+async function ensureUniqueEid() {
   for (let attempt = 0; attempt < 25; attempt += 1) {
     const candidate = generateUniqueEidCandidate();
     const existingUser = await User.exists({ eid: candidate });
@@ -95,7 +83,7 @@ async function createUser(req, res) {
   }
 
   try {
-    const eid = await ensureUniqueEid(req.body?.eid);
+    const eid = await ensureUniqueEid();
     const password = generateRandomPassword();
 
     const createdUser = await User.create({
