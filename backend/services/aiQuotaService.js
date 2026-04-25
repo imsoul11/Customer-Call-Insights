@@ -30,7 +30,7 @@ async function ensureQuotaDocument() {
       new: true,
       setDefaultsOnInsert: true,
     }
-  );
+  ).lean();
 }
 
 function formatQuotaStatus(quotaDocument) {
@@ -50,7 +50,7 @@ function formatQuotaStatus(quotaDocument) {
 }
 
 async function getQuotaStatus() {
-  const quotaDocument = await AiQuota.findOne({ key: QUOTA_KEY });
+  const quotaDocument = await AiQuota.findOne({ key: QUOTA_KEY }).lean();
   return formatQuotaStatus(quotaDocument);
 }
 
@@ -74,7 +74,7 @@ async function reserveQuotaSlot() {
     {
       new: true,
     }
-  );
+  ).lean();
 
   return reservedDocument ? formatQuotaStatus(reservedDocument) : null;
 }
@@ -96,7 +96,7 @@ async function refundQuotaSlot() {
     {
       new: true,
     }
-  );
+  ).lean();
 
   return refundedDocument ? formatQuotaStatus(refundedDocument) : getQuotaStatus();
 }
@@ -119,7 +119,7 @@ async function resetQuotaUsage() {
       new: true,
       setDefaultsOnInsert: true,
     }
-  );
+  ).lean();
 
   return formatQuotaStatus(resetDocument);
 }

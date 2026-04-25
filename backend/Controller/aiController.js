@@ -130,7 +130,7 @@ async function upsertRawCall(callPayload) {
       runValidators: true,
       setDefaultsOnInsert: true,
     }
-  );
+  ).lean();
 }
 
 async function analyzeCall(req, res) {
@@ -158,7 +158,7 @@ async function analyzeCall(req, res) {
     callPayload.cid = await ensureCallId(callPayload.cid);
     await upsertRawCall(callPayload);
 
-    const existingAnalysis = await AIdata.findOne({ cid: callPayload.cid });
+    const existingAnalysis = await AIdata.findOne({ cid: callPayload.cid }).lean();
 
     if (existingAnalysis) {
       return res.json({
@@ -210,7 +210,7 @@ async function analyzeCall(req, res) {
           runValidators: true,
           setDefaultsOnInsert: true,
         }
-      );
+      ).lean();
 
       return res.status(201).json({
         success: true,
@@ -221,7 +221,7 @@ async function analyzeCall(req, res) {
       });
     } catch (saveError) {
       if (saveError?.code === 11000) {
-        const existingDocument = await AIdata.findOne({ cid: callPayload.cid });
+        const existingDocument = await AIdata.findOne({ cid: callPayload.cid }).lean();
 
         if (existingDocument) {
           return res.json({
