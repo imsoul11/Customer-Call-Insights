@@ -25,11 +25,11 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CALLS_UPDATED_EVENT, CALLS_UPDATED_STORAGE_KEY } from "@/lib/callSync";
+import { useAuth } from "@/context/AuthContext";
+import { useCallSync } from "@/context/CallSyncContext";
+import { useExport } from "@/context/ExportContext";
 import { cn } from "@/lib/utils";
 import { Clock3, Globe2, PhoneCall, TrendingUp, Users } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
-import { useExport } from "@/context/ExportContext";
 import { fetchBackendCallRecords, fetchBackendUsers } from "@/lib/backendData";
 import PageLoading from "../components/PageLoading";
 import { BarChartCom } from "@/components/barChart.jsx";
@@ -169,6 +169,7 @@ function MetricCard({ icon: Icon, label, value, subtitle }) {
 
 export function CallLogs() {
   const { isAuthenticated, loading, user } = useAuth();
+  const { callsUpdatedAt } = useCallSync();
   const { setExportConfig } = useExport();
 
   const [callLogs, setCallLogs] = useState([]);
@@ -240,26 +241,12 @@ export function CallLogs() {
       }
     }
 
-    function handleCallsUpdated() {
-      fetchData();
-    }
-
-    function handleStorage(event) {
-      if (event.key === CALLS_UPDATED_STORAGE_KEY) {
-        fetchData();
-      }
-    }
-
     fetchData();
-    window.addEventListener(CALLS_UPDATED_EVENT, handleCallsUpdated);
-    window.addEventListener("storage", handleStorage);
 
     return () => {
       isMounted = false;
-      window.removeEventListener(CALLS_UPDATED_EVENT, handleCallsUpdated);
-      window.removeEventListener("storage", handleStorage);
     };
-  }, []);
+  }, [callsUpdatedAt]);
 
   const filteredLogs = useMemo(() => (
     user

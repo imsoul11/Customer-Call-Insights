@@ -19,10 +19,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useAuth } from "@/context/AuthContext";
+import { useCallSync } from "@/context/CallSyncContext";
 import { cn } from "@/lib/utils";
 import { buildApiUrl } from "@/lib/api";
-import { notifyCallsUpdated } from "@/lib/callSync";
-import { useAuth } from "@/context/AuthContext";
 import PageLoading from "../components/PageLoading";
 import { FileText, ShieldAlert, ShieldCheck, Sparkles, Star } from "lucide-react";
 
@@ -97,6 +97,7 @@ function MetricCard({ label, value, subtitle }) {
 
 export function GenerateAnalysis() {
   const { user, isAuthenticated, loading } = useAuth();
+  const { notifyCallsUpdated } = useCallSync();
   const [pageLoading, setPageLoading] = useState(true);
   const [quotaStatus, setQuotaStatus] = useState(defaultQuotaStatus);
   const [fetchWarning, setFetchWarning] = useState("");
@@ -212,10 +213,7 @@ export function GenerateAnalysis() {
       }
 
       if (error.response?.data?.call) {
-        notifyCallsUpdated({
-          cid: error.response.data.call.cid,
-          eid: error.response.data.call.eid,
-        });
+        notifyCallsUpdated();
       }
 
       setSubmitError(
@@ -232,10 +230,7 @@ export function GenerateAnalysis() {
       // console.info("[GenerateAnalysis] submission succeeded", response.data);
       setAnalysisResult(response.data?.data || null);
       setQuotaStatus(response.data?.quota || quotaStatus);
-      notifyCallsUpdated({
-        cid: savedCallId,
-        eid: requestPayload.eid,
-      });
+      notifyCallsUpdated();
       setSubmitSuccess(
         response.data?.cached
           ? `Analysis for ${savedCallId} already existed and has been loaded. The raw call record is synced to Call Logs.`

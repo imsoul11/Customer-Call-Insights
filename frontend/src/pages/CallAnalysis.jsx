@@ -28,6 +28,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useCallSync } from "@/context/CallSyncContext";
 import { fetchBackendUsers } from "@/lib/backendData";
 import { cn } from "@/lib/utils";
 import { buildApiUrl } from "@/lib/api";
@@ -103,6 +104,7 @@ function MetricCard({ icon: Icon, label, value, subtitle }) {
 
 export function CallAnalysis() {
   const { user, isAuthenticated, loading } = useAuth();
+  const { callsUpdatedAt } = useCallSync();
   const { setExportConfig } = useExport();
   const [callAnalysis, setCallAnalysis] = useState([]);
   const [employeeIds, setEmployeeIds] = useState([]);
@@ -124,12 +126,18 @@ export function CallAnalysis() {
   };
 
   useEffect(() => {
+    let isMounted = true;
+
     const fetchCallData = async () => {
       try {
         const [response, users] = await Promise.all([
           axios.get(buildApiUrl("/api/data/all")),
           fetchBackendUsers(),
         ]);
+
+        if (!isMounted) {
+          return;
+        }
 
         if (response.data.success) {
           const aiData = response.data.data || [];
@@ -156,15 +164,25 @@ export function CallAnalysis() {
           console.error("Failed to fetch data: ", response.data.message);
         }
       } catch (fetchError) {
+        if (!isMounted) {
+          return;
+        }
+
         setError("Failed to fetch call analysis data.");
         console.error("Error fetching call analysis data:", fetchError);
       } finally {
-        setPageLoading(false);
+        if (isMounted) {
+          setPageLoading(false);
+        }
       }
     };
 
     fetchCallData();
-  }, []);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [callsUpdatedAt]);
 
   const isEmployee = user?.role === "employee";
 
