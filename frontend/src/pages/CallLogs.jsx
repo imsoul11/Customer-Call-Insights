@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import {
   Table,
   TableBody,
@@ -617,6 +617,7 @@ export function CallLogs() {
                     <TableHead className="w-[110px] text-left text-xs uppercase tracking-[0.14em] text-slate-500">Status</TableHead>
                     <TableHead className="w-[110px] text-left text-xs uppercase tracking-[0.14em] text-slate-500">Timestamp</TableHead>
                     <TableHead className="w-[110px] text-left text-xs uppercase tracking-[0.14em] text-slate-500">Duration</TableHead>
+                    <TableHead className="w-[110px] text-right text-xs uppercase tracking-[0.14em] text-slate-500">Review</TableHead>
                   </TableRow>
                 </TableHeader>
 
@@ -683,6 +684,12 @@ export function CallLogs() {
                         >
                           {log.duration || "0 m 0 s"}
                         </Badge>
+                      </TableCell>
+
+                      <TableCell className="text-right">
+                        <Button asChild size="sm" variant="outline" className="border-slate-200 bg-white hover:bg-sky-50 dark:border-slate-800 dark:bg-slate-950 dark:hover:bg-slate-900">
+                          <Link to={`/dashboard/calls/${encodeURIComponent(log.cid)}`}>Open</Link>
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}

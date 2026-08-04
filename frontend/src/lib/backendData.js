@@ -67,6 +67,19 @@ export async function fetchBackendCallRecords() {
   return fetchCollection("/api/calls", normalizeCallRecord);
 }
 
+export async function fetchBackendCallDetail(cid) {
+  const response = await axios.get(buildApiUrl(`/api/calls/${encodeURIComponent(cid)}`));
+
+  if (!response.data?.success) {
+    throw new Error(response.data?.message || "Failed to fetch call details.");
+  }
+
+  return {
+    call: normalizeCallRecord(response.data.data?.call || {}),
+    analysis: response.data.data?.analysis || null,
+  };
+}
+
 export async function createBackendUser(userPayload) {
   const response = await axios.post(buildApiUrl("/api/users"), userPayload);
 
