@@ -9,6 +9,7 @@ import Login from '../pages/Login';
 import Leaderboard from '../pages/Leaderboard';
 import UserManagement from '../pages/UserManagement';
 import GenerateAnalysis from '../pages/GenerateAnalysis';
+import CallDetail from '../pages/CallDetail';
 
 const employeeRoutes = ['manager', 'employee'];
 
@@ -71,6 +72,14 @@ export default function AppRoutes() {
           element={
             <ProtectedRoute allowedRoles={employeeRoutes}>
               <CallLogs />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="dashboard/calls/:cid"
+          element={
+            <ProtectedRoute allowedRoles={employeeRoutes}>
+              <CallDetail />
             </ProtectedRoute>
           }
         />

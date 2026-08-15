@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,14 +10,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  Drawer,
-  DrawerContent,
-  DrawerDescription,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
@@ -632,54 +624,9 @@ export function CallAnalysis() {
                       </TableCell>
 
                       <TableCell className="text-left">
-                        <Drawer>
-                          <DrawerTrigger asChild>
-                            <Button variant="outline" className="border-slate-200 bg-white hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-950 dark:hover:bg-slate-900">
-                              View Summary
-                            </Button>
-                          </DrawerTrigger>
-                          <DrawerContent className="mx-auto w-full max-w-6xl rounded-t-[24px] border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
-                            <DrawerHeader className="px-6 pt-6">
-                              <div className="flex flex-wrap gap-2">
-                                <Badge className="border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-900">
-                                  Call {analysis.cid}
-                                </Badge>
-                                <Badge variant="outline" className={cn("font-medium", getSentimentTone(analysis.sentiment_analysis))}>
-                                  {analysis.sentiment_analysis}
-                                </Badge>
-                              </div>
-                              <DrawerTitle className="pt-2 text-2xl">AI Call Summary</DrawerTitle>
-                              <DrawerDescription>
-                                Review the generated summary and score for {getEmployeeLabel(analysis.eid)}.
-                              </DrawerDescription>
-                            </DrawerHeader>
-
-                            <div className="grid gap-4 px-6 pb-6 md:grid-cols-3">
-                              <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-900/60">
-                                <div className="text-sm text-slate-500 dark:text-slate-400">Employee</div>
-                                <div className="mt-2 font-medium text-slate-900 dark:text-slate-100">{getEmployeeLabel(analysis.eid)}</div>
-                              </div>
-                              <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-900/60">
-                                <div className="text-sm text-slate-500 dark:text-slate-400">Satisfaction Score</div>
-                                <div className="mt-2 font-medium text-slate-900 dark:text-slate-100">
-                                  {Number(analysis.satisfaction_score).toFixed(1)} / 4
-                                </div>
-                              </div>
-                              <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-900/60">
-                                <div className="text-sm text-slate-500 dark:text-slate-400">Sentiment</div>
-                                <div className="mt-2 font-medium capitalize text-slate-900 dark:text-slate-100">
-                                  {analysis.sentiment_analysis}
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="px-6 pb-8">
-                              <div className="w-full rounded-2xl border border-slate-200 bg-slate-50/80 p-5 text-sm leading-7 text-slate-700 dark:border-slate-700/80 dark:bg-slate-900/70 dark:text-slate-100">
-                                {analysis.call_summary || "No summary available."}
-                              </div>
-                            </div>
-                          </DrawerContent>
-                        </Drawer>
+                        <Button asChild variant="outline" className="border-slate-200 bg-white hover:bg-sky-50 dark:border-slate-800 dark:bg-slate-950 dark:hover:bg-slate-900">
+                          <Link to={`/dashboard/calls/${encodeURIComponent(analysis.cid)}`}>Open workspace</Link>
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}
